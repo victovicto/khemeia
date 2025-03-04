@@ -7,7 +7,7 @@ import Usuario from '../models/usuario.js';
 const router = express.Router();
 
 // Cadastro de usuário
-router.post('/cadastro', async (req, res) => {
+router.post('/cadastro1', async (req, res) => {
   const { nome, email, senha } = req.body;
   const senhaHash = await bcrypt.hash(senha, 10);
   
@@ -18,7 +18,7 @@ router.post('/cadastro', async (req, res) => {
 });
 
 // Login de usuário
-router.post('/login', async (req, res) => {
+router.post('/login1', async (req, res) => {
   const { email, senha } = req.body;
   const usuario = await Usuario.findOne({ email });
 
