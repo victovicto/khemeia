@@ -8,8 +8,7 @@
   ],
   "routes": [
     {
-      "src": "/auth/cadastro1",
-      "src": "/auth/login1",
+      "src": "/auth/(.*)",
       "dest": "/server.js"
     }
   ]
