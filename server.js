@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
@@ -17,8 +18,7 @@ mongoose.connect(process.env.MONGO_URI)
 // Rota de teste
 app.get("/", (_req, res) => res.send("Servidor rodando!"));
 
+app.use('/auth', authRoutes);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
-
-import authRoutes from './routes/auth.js';  // Importando a rota corretamente
-app.use('/auth', authRoutes);
