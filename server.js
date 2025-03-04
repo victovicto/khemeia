@@ -7,7 +7,12 @@ import authRoutes from './routes/auth.js';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*', // Permite qualquer origem
+  methods: ['GET', 'POST'], // Métodos permitidos
+  allowedHeaders: ['Content-Type'], // Cabeçalhos permitidos
+}));
+
 app.use(express.json());
 
 // Conectar ao MongoDB
@@ -19,6 +24,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.get("/", (_req, res) => res.send("Servidor rodando!"));
 
 app.use('/auth', authRoutes);
+console.log("Rotas carregadas!");
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
