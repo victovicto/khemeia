@@ -7,7 +7,12 @@ import authRoutes from './routes/auth.js';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 
 app.use(express.json());
 
@@ -22,5 +27,5 @@ app.get("/", (_req, res) => res.send("Servidor rodando!"));
 app.use('/auth', authRoutes);
 console.log("Rotas carregadas!");
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
