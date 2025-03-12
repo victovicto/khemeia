@@ -1,11 +1,22 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';  // Importar JWT
+import jwt from 'jsonwebtoken';
 import Usuario from '../models/usuario.js';
 
 const router = express.Router();
 
-// Login de usuário
+// Cadastro de usuário
+router.post('/cadastro', async (req, res) => {
+  const { nome, email, senha } = req.body;
+  const senhaHash = await bcrypt.hash(senha, 10);
+  
+  const novoUsuario = new Usuario({ nome, email, senha: senhaHash });
+  await novoUsuario.save();
+  
+  res.json({ mensagem: "Usuário cadastrado com sucesso!" });
+});
+
+
 router.post('/login', async (req, res) => {
   const { email, senha } = req.body;
   const usuario = await Usuario.findOne({ email });
