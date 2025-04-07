@@ -1,5 +1,5 @@
 import express from 'express';
-import Molecule from '../models/molecule.js'; 
+import Molecule from '../models/molecula.js'; 
 
 const router = express.Router();
 
