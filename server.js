@@ -3,6 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
+import moleculeRoutes from './routes/molecule.js'; // Importe as rotas de moléculas
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 
 dotenv.config();
 
@@ -12,7 +16,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 
 app.use(express.json());
 
@@ -24,8 +27,15 @@ mongoose.connect(process.env.MONGO_URI)
 // Rota de teste
 app.get("/", (_req, res) => res.send("Servidor rodando!"));
 
-app.use('/auth', authRoutes);
+app.use('/auth', authRoutes); // Rotas de autenticação
+app.use('/molecule', moleculeRoutes); // Rotas de moléculas
+
 console.log("Rotas carregadas!");
 
 const PORT = process.env.PORT || 3001;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
