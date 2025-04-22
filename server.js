@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import moleculeRoutes from './routes/molecule.js'; // Importe as rotas de moléculas
 import path from 'path';
 import { fileURLToPath } from 'url';
+import quizRoutes from './routes/quiz.js';
 
 
 dotenv.config();
@@ -28,7 +29,8 @@ mongoose.connect(process.env.MONGO_URI)
 app.get("/", (_req, res) => res.send("Servidor rodando!"));
 
 app.use('/auth', authRoutes); // Rotas de autenticação
-app.use('/molecule', moleculeRoutes); // Rotas de moléculas
+app.use('/molecule', moleculeRoutes);
+app.use('/quiz', quizRoutes); // Rotas de moléculas
 
 console.log("Rotas carregadas!");
 
@@ -38,4 +40,5 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
 
