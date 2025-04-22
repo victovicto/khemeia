@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
-import moleculeRoutes from './routes/molecule.js'; // Importe as rotas de moléculas
+import moleculeRoutes from './routes/molecule.js'; 
 import path from 'path';
 import { fileURLToPath } from 'url';
 import quizRoutes from './routes/quiz.js';
