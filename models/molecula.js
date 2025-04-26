@@ -9,6 +9,10 @@ const moleculeSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  usuarioId: {
+    type: String,
+    required: true,
+  }
 });
 
 const Molecule = mongoose.model('Molecule', moleculeSchema);

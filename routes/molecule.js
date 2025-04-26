@@ -5,13 +5,13 @@ const router = express.Router();
 
 // Rota para salvar uma molécula
 router.post('/salvar-molecula', async (req, res) => {
-  const { name, molfile } = req.body;
+  const { name, molfile, usuarioId } = req.body; // Agora pega o usuarioId também!
 
-const newMolecule = new Molecule({
-  name: name,
-  molfile: molfile,
-});
-
+  const newMolecule = new Molecule({
+    name: name,
+    molfile: molfile,
+    usuarioId: usuarioId, // Adiciona o usuário dono da molécula
+  });
 
   try {
     const savedMolecule = await newMolecule.save();
@@ -31,6 +31,17 @@ router.get('/carregar-molecula/:id', async (req, res) => {
     res.status(200).send(molecule);
   } catch (error) {
     res.status(500).send({ message: 'Erro ao carregar a molécula', error });
+  }
+});
+
+// (Extra opcional) Rota para listar TODAS as moléculas de um usuário
+router.get('/moleculas-usuario/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
+  try {
+    const molecules = await Molecule.find({ usuarioId: usuarioId });
+    res.status(200).send(molecules);
+  } catch (error) {
+    res.status(500).send({ message: 'Erro ao buscar moléculas do usuário', error });
   }
 });
 
