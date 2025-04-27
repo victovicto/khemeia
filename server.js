@@ -3,12 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
-import moleculeRoutes from './routes/molecule.js'; 
+import moleculeRoutes from './routes/molecule.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import quizRoutes from './routes/quiz.js';
 import desempenhoRoutes from './routes/desempenho.js';
-
 
 dotenv.config();
 
@@ -21,10 +20,17 @@ app.use(cors({
 
 app.use(express.json());
 
-// Conectar ao MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB conectado"))
-  .catch(err => console.error("Erro ao conectar ao MongoDB:", err));
+const connectToDatabase = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB conectado");
+  } catch (err) {
+    console.error("Erro ao conectar ao MongoDB:", err);
+    process.exit(1); // Termina o servidor caso a conexão falhe
+  }
+};
+
+connectToDatabase();
 
 // Rota de teste
 app.get("/", (_req, res) => res.send("Servidor rodando!"));
@@ -32,7 +38,7 @@ app.get("/", (_req, res) => res.send("Servidor rodando!"));
 app.use('/auth', authRoutes); // Rotas de autenticação
 app.use('/molecule', moleculeRoutes);
 app.use('/quiz', quizRoutes);
-app.use('/desempenho', desempenhoRoutes); // Rotas de moléculas
+app.use('/desempenho', desempenhoRoutes); // Rotas de desempenho
 
 console.log("Rotas carregadas!");
 
@@ -42,5 +48,3 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
-
-

@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Rota GET /desempenho (Pega desempenho do usuário logado)
 router.get('/', authMiddleware, async (req, res) => {
-  const usuarioId = req.usuario.id;
+  const usuarioId = req.usuarioId;  // Corrigido para usar req.usuarioId
 
   try {
     const respostas = await Resposta.find({ usuarioId });
@@ -74,18 +74,32 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // Rota POST /desempenho (Salvar 5 respostas do round)
 router.post('/', authMiddleware, async (req, res) => {
-  const usuarioId = req.usuario.id;
-  const respostas = req.body.respostas; // ← espera um array
+  const usuarioId = req.usuarioId; // Corrigido para usar req.usuarioId
+  const respostas = req.body.respostas; // Espera um array de respostas
 
   if (!Array.isArray(respostas) || respostas.length === 0) {
     return res.status(400).json({ erro: 'Nenhuma resposta fornecida.' });
+  }
+
+  // Validação das respostas
+  const respostasValidas = respostas.every(r => {
+    return (
+      typeof r.acertou === 'boolean' &&
+      typeof r.assunto === 'string' &&
+      r.assunto.trim() !== ''
+    );
+  });
+
+  if (!respostasValidas) {
+    return res.status(400).json({ erro: 'Respostas inválidas fornecidas.' });
   }
 
   try {
     const respostasParaSalvar = respostas.map(({ assunto, acertou }) => ({
       usuarioId,
       assunto,
-      acertou
+      acertou,
+      data: new Date()  // Supondo que a data da resposta seja a data atual
     }));
 
     await Resposta.insertMany(respostasParaSalvar);
