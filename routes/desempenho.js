@@ -20,7 +20,7 @@ router.get('/:usuarioId', async (req, res) => {
         totalRespondidas: 0,
         totalAcertos: 0,
         totalErros: 0,
-        mediaPorDia: 0,
+        mediaPorDia: 0.0, // agora como double mesmo sem respostas
         melhorDesempenho: null,
         piorDesempenho: null
       });
@@ -30,14 +30,19 @@ router.get('/:usuarioId', async (req, res) => {
     const totalAcertos = respostas.filter(r => r.acertou).length;
     const totalErros = totalRespondidas - totalAcertos;
 
+    // Agrupando respostas por dia
     const respostasPorDia = {};
     respostas.forEach(r => {
       const dia = r.data.toISOString().split('T')[0];
       if (!respostasPorDia[dia]) respostasPorDia[dia] = [];
       respostasPorDia[dia].push(r);
     });
-    const mediaPorDia = (totalRespondidas / Object.keys(respostasPorDia).length).toFixed(2);
 
+    // Calculando média por dia
+    const mediaPorDiaRaw = totalRespondidas / Object.keys(respostasPorDia).length;
+    const mediaPorDia = parseFloat(mediaPorDiaRaw.toFixed(2)); // sempre envia double
+
+    // Analisando desempenho por assunto
     const desempenhoPorAssunto = {};
     respostas.forEach(r => {
       if (!desempenhoPorAssunto[r.assunto]) {
@@ -60,7 +65,7 @@ router.get('/:usuarioId', async (req, res) => {
       totalRespondidas,
       totalAcertos,
       totalErros,
-      mediaPorDia: parseFloat(mediaPorDia),
+      mediaPorDia,
       melhorDesempenho,
       piorDesempenho
     });
