@@ -1,24 +1,22 @@
-const express = require('express');
+import express from 'express';
+import Resposta from '../models/desempenho.js';
+
 const router = express.Router();
-const Resposta = require('../models/desempenho.js');
 
 // GET /desempenho/:usuarioId
 router.get('/:usuarioId', async (req, res) => {
   const { usuarioId } = req.params;
 
-  // Verificar se o usuarioId foi fornecido
   if (!usuarioId) {
     return res.status(400).json({ erro: 'Usuário não informado.' });
   }
 
   try {
-    // Buscar respostas apenas do usuário específico
-    const respostas = await Resposta.find({ usuarioId: usuarioId });
+    const respostas = await Resposta.find({ usuarioId });
 
-    // Se não houver respostas para o usuário
     if (!respostas.length) {
       return res.json({
-        usuarioId: usuarioId,
+        usuarioId,
         totalRespondidas: 0,
         totalAcertos: 0,
         totalErros: 0,
@@ -32,7 +30,6 @@ router.get('/:usuarioId', async (req, res) => {
     const totalAcertos = respostas.filter(r => r.acertou).length;
     const totalErros = totalRespondidas - totalAcertos;
 
-    // Agrupar por dia (formato YYYY-MM-DD)
     const respostasPorDia = {};
     respostas.forEach(r => {
       const dia = r.data.toISOString().split('T')[0];
@@ -41,7 +38,6 @@ router.get('/:usuarioId', async (req, res) => {
     });
     const mediaPorDia = (totalRespondidas / Object.keys(respostasPorDia).length).toFixed(2);
 
-    // Agrupar por assunto
     const desempenhoPorAssunto = {};
     respostas.forEach(r => {
       if (!desempenhoPorAssunto[r.assunto]) {
@@ -51,7 +47,6 @@ router.get('/:usuarioId', async (req, res) => {
       if (r.acertou) desempenhoPorAssunto[r.assunto].acertos++;
     });
 
-    // Ordenar os assuntos pelo desempenho (maior percentual de acertos)
     const assuntosOrdenados = Object.entries(desempenhoPorAssunto).map(([assunto, dados]) => {
       const percentual = (dados.acertos / dados.total) * 100;
       return { assunto, percentual };
@@ -61,7 +56,7 @@ router.get('/:usuarioId', async (req, res) => {
     const piorDesempenho = assuntosOrdenados[assuntosOrdenados.length - 1] || null;
 
     res.json({
-      usuarioId: usuarioId,
+      usuarioId,
       totalRespondidas,
       totalAcertos,
       totalErros,
@@ -76,4 +71,4 @@ router.get('/:usuarioId', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
