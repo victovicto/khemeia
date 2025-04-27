@@ -1,9 +1,9 @@
 import express from 'express';
-import Resposta from '../models/desempenho.js';
+import Resposta from '../models/desempenhos.js';
 
 const router = express.Router();
 
-// GET /desempenho/:usuarioId
+// Rota GET /desempenho/:usuarioId (para obter o desempenho do usuário)
 router.get('/:usuarioId', async (req, res) => {
   const { usuarioId } = req.params;
 
@@ -73,6 +73,33 @@ router.get('/:usuarioId', async (req, res) => {
   } catch (error) {
     console.error('Erro ao calcular desempenho:', error);
     res.status(500).json({ erro: 'Erro ao calcular desempenho do usuário.' });
+  }
+});
+
+// Rota POST /desempenho (para salvar as respostas)
+router.post('/', async (req, res) => {
+  const { usuarioId, assunto, acertou } = req.body;
+
+  if (!usuarioId || !assunto || acertou === undefined) {
+    return res.status(400).json({ erro: 'Dados inválidos ou ausentes.' });
+  }
+
+  try {
+    // Criando uma nova resposta no banco
+    const novaResposta = new Resposta({
+      usuarioId,
+      assunto,
+      acertou,
+    });
+
+    // Salvando no banco
+    await novaResposta.save();
+
+    res.status(201).json({ message: 'Resposta salva com sucesso.' });
+
+  } catch (error) {
+    console.error('Erro ao salvar resposta:', error);
+    res.status(500).json({ erro: 'Erro ao salvar a resposta.' });
   }
 });
 
