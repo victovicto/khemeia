@@ -9,10 +9,10 @@ const router = express.Router();
 router.post('/cadastro', async (req, res) => {
   const { nome, email, senha } = req.body;
   const senhaHash = await bcrypt.hash(senha, 10);
-  
+
   const novoUsuario = new Usuario({ nome, email, senha: senhaHash });
   await novoUsuario.save();
-  
+
   res.json({ mensagem: "Usuário cadastrado com sucesso!" });
 });
 
@@ -27,11 +27,14 @@ router.post('/login', async (req, res) => {
 
   const token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+  // Incluindo o nome do usuário junto com o ID e o token
   res.json({
     mensagem: "Login bem-sucedido",
     token,
-    id: usuario._id 
+    id: usuario._id,
+    nome: usuario.nome,  
   });
 });
 
 export default router;
+
