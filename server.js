@@ -7,6 +7,7 @@ import moleculeRoutes from './routes/molecule.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import quizRoutes from './routes/quiz.js';
+import desempenhoRoutes from './routes/desempenho.js';
 
 
 dotenv.config();
@@ -30,7 +31,8 @@ app.get("/", (_req, res) => res.send("Servidor rodando!"));
 
 app.use('/auth', authRoutes); // Rotas de autenticação
 app.use('/molecule', moleculeRoutes);
-app.use('/quiz', quizRoutes); // Rotas de moléculas
+app.use('/quiz', quizRoutes);
+app.use('/desempenho', desempenhoRoutes); // Rotas de moléculas
 
 console.log("Rotas carregadas!");
 

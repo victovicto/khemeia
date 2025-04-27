@@ -16,7 +16,7 @@ router.post('/cadastro', async (req, res) => {
   res.json({ mensagem: "Usuário cadastrado com sucesso!" });
 });
 
-
+// Login de usuário
 router.post('/login', async (req, res) => {
   const { email, senha } = req.body;
   const usuario = await Usuario.findOne({ email });
@@ -25,10 +25,13 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ erro: "Credenciais inválidas" });
   }
 
-  // Criar token JWT
   const token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-  res.json({ mensagem: "Login bem-sucedido", token });
+  res.json({
+    mensagem: "Login bem-sucedido",
+    token,
+    id: usuario._id 
+  });
 });
 
 export default router;
