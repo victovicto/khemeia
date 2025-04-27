@@ -1,15 +1,12 @@
 import express from 'express';
 import Resposta from '../models/desempenhos.js';
+import authMiddleware from '../middleware/authid.js';
 
 const router = express.Router();
 
-// Rota GET /desempenho/:usuarioId (para obter o desempenho do usuário)
-router.get('/:usuarioId', async (req, res) => {
-  const { usuarioId } = req.params;
-
-  if (!usuarioId) {
-    return res.status(400).json({ erro: 'Usuário não informado.' });
-  }
+// Rota GET /desempenho (Pega desempenho do usuário logado)
+router.get('/', authMiddleware, async (req, res) => {
+  const usuarioId = req.usuario.id;
 
   try {
     const respostas = await Resposta.find({ usuarioId });
@@ -20,7 +17,7 @@ router.get('/:usuarioId', async (req, res) => {
         totalRespondidas: 0,
         totalAcertos: 0,
         totalErros: 0,
-        mediaPorDia: 0.0, // agora como double mesmo sem respostas
+        mediaPorDia: 0.0,
         melhorDesempenho: null,
         piorDesempenho: null
       });
@@ -38,9 +35,8 @@ router.get('/:usuarioId', async (req, res) => {
       respostasPorDia[dia].push(r);
     });
 
-    // Calculando média por dia
     const mediaPorDiaRaw = totalRespondidas / Object.keys(respostasPorDia).length;
-    const mediaPorDia = parseFloat(mediaPorDiaRaw.toFixed(2)); // sempre envia double
+    const mediaPorDia = parseFloat(mediaPorDiaRaw.toFixed(2));
 
     // Analisando desempenho por assunto
     const desempenhoPorAssunto = {};
@@ -76,30 +72,29 @@ router.get('/:usuarioId', async (req, res) => {
   }
 });
 
-// Rota POST /desempenho (para salvar as respostas)
-router.post('/', async (req, res) => {
-  const { usuarioId, assunto, acertou } = req.body;
+// Rota POST /desempenho (Salvar 5 respostas do round)
+router.post('/', authMiddleware, async (req, res) => {
+  const usuarioId = req.usuario.id;
+  const respostas = req.body.respostas; // ← espera um array
 
-  if (!usuarioId || !assunto || acertou === undefined) {
-    return res.status(400).json({ erro: 'Dados inválidos ou ausentes.' });
+  if (!Array.isArray(respostas) || respostas.length === 0) {
+    return res.status(400).json({ erro: 'Nenhuma resposta fornecida.' });
   }
 
   try {
-    // Criando uma nova resposta no banco
-    const novaResposta = new Resposta({
+    const respostasParaSalvar = respostas.map(({ assunto, acertou }) => ({
       usuarioId,
       assunto,
-      acertou,
-    });
+      acertou
+    }));
 
-    // Salvando no banco
-    await novaResposta.save();
+    await Resposta.insertMany(respostasParaSalvar);
 
-    res.status(201).json({ message: 'Resposta salva com sucesso.' });
+    res.status(201).json({ mensagem: 'Respostas salvas com sucesso.' });
 
   } catch (error) {
-    console.error('Erro ao salvar resposta:', error);
-    res.status(500).json({ erro: 'Erro ao salvar a resposta.' });
+    console.error('Erro ao salvar respostas:', error);
+    res.status(500).json({ erro: 'Erro ao salvar as respostas.' });
   }
 });
 
