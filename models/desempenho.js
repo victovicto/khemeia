@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const respostaSchema = new mongoose.Schema({
   usuarioId: String,
@@ -11,4 +11,6 @@ const respostaSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Desempenho', respostaSchema);
+const Desempenho = mongoose.model('Desempenho', respostaSchema);
+
+export default Desempenho;
