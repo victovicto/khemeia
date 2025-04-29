@@ -5,12 +5,11 @@ import Usuario from '../models/usuario.js';
 
 const router = express.Router();
 
-// Cadastro de usuário
+// Cadastro
 router.post('/cadastro', async (req, res) => {
   const { nome, email, senha } = req.body;
 
   try {
-    // Verificar se o email já está cadastrado
     const usuarioExistente = await Usuario.findOne({ email });
     if (usuarioExistente) {
       return res.status(400).json({ erro: 'Email já cadastrado' });
@@ -27,7 +26,7 @@ router.post('/cadastro', async (req, res) => {
   }
 });
 
-// Login de usuário
+// Login
 router.post('/login', async (req, res) => {
   const { email, senha } = req.body;
 
@@ -43,7 +42,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ erro: 'Email ou senha inválidos' });
     }
 
-    const token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(
+      { id: usuario._id }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1h' }
+    );
 
     res.json({
       mensagem: 'Login bem-sucedido',
