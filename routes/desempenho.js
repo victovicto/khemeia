@@ -1,6 +1,12 @@
+import express from 'express';
+import autenticarToken from '../middleware/authid.js';  // Importando o middleware corretamente
+import Desempenho from '../models/desempenhos.js';  // Certifique-se de que o modelo esteja correto
+
+const router = express.Router();
+
 // Rota POST /desempenho (Salvar uma resposta do round)
-router.post('/', authMiddleware, async (req, res) => {
-  const usuarioId = req.usuarioId;
+router.post('/', autenticarToken, async (req, res) => {  // Usando o middleware de autenticação
+  const usuarioId = req.usuarioId;  // Agora o usuarioId está disponível através do middleware
   const { questaoId, assunto, acertou } = req.body;
 
   console.log('Resposta recebida:', { questaoId, assunto, acertou }); // 🔍 Verificando o que chega do Flutter
@@ -28,7 +34,7 @@ router.post('/', authMiddleware, async (req, res) => {
       data: new Date(),
     };
 
-    await Desempenho.create(respostaParaSalvar);
+    await Desempenho.create(respostaParaSalvar);  // Salva a resposta no banco de dados
 
     res.status(201).json({ mensagem: 'Resposta salva com sucesso.' });
 
