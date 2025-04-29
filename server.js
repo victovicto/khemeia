@@ -8,6 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import quizRoutes from './routes/quiz.js';
 import desempenhoRoutes from './routes/desempenho.js';
+import aiRoute from './routes/ai.js'; 
 
 dotenv.config();
 
@@ -38,10 +39,12 @@ app.get("/", (_req, res) => res.send("Servidor rodando!"));
 app.use('/auth', authRoutes); // Rotas de autenticação
 app.use('/molecule', moleculeRoutes);
 app.use('/quiz', quizRoutes);
-app.use('/desempenho', desempenhoRoutes); // Rotas de desempenho
+app.use('/desempenho', desempenhoRoutes);
+
+app.use('/ai', aiRoute);
+ // Rotas de desempenho
 
 console.log("Rotas carregadas!");
-
 const PORT = process.env.PORT || 3001;
 
 const __filename = fileURLToPath(import.meta.url);
