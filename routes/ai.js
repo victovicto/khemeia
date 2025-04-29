@@ -36,4 +36,3 @@ router.post('/composto', async (req, res) => {
 });
 
 export default router;
-
