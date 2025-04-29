@@ -1,5 +1,5 @@
 import express from 'express';
-import openai from '../config/openai.js'; // Corrigido: vírgula -> ponto
+import openai from '../config/openai.js'; // Essa importação deve ser compatível com a nova configuração
 
 const router = express.Router();
 
@@ -20,12 +20,20 @@ router.post('/composto', async (req, res) => {
       max_tokens: 300,
     });
 
-    const resultado = resposta.choices[0].message.content;
+    const resultado = resposta?.choices[0]?.message?.content || "Resposta não encontrada.";
+
+    console.log("Resposta da IA:", resultado);
+
     res.json({ resposta: resultado });
+
   } catch (err) {
-    console.error('Erro na requisição OpenAI:', err);
-    res.status(500).json({ erro: 'Falha ao gerar resposta da IA' });
+    console.error('Erro na requisição OpenAI:', err.response?.data || err.message);
+    res.status(500).json({
+      erro: 'Falha ao gerar resposta da IA',
+      detalhes: err.message,
+    });
   }
 });
 
 export default router;
+
