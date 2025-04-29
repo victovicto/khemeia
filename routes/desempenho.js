@@ -1,15 +1,16 @@
+// routes/desempenho.js
 import express from 'express';
-import Resposta from '../models/desempenhos.js';
+import Desempenho from '../models/desempenhos.js';
 import authMiddleware from '../middleware/authid.js';
 
 const router = express.Router();
 
 // Rota GET /desempenho (Pega desempenho do usuário logado)
 router.get('/', authMiddleware, async (req, res) => {
-  const usuarioId = req.usuarioId;  // Corrigido para usar req.usuarioId
+  const usuarioId = req.usuarioId;
 
   try {
-    const respostas = await Resposta.find({ usuarioId });
+    const respostas = await Desempenho.find({ usuarioId });
 
     if (!respostas.length) {
       return res.json({
@@ -74,8 +75,8 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // Rota POST /desempenho (Salvar 5 respostas do round)
 router.post('/', authMiddleware, async (req, res) => {
-  const usuarioId = req.usuarioId; // Corrigido para usar req.usuarioId
-  const respostas = req.body.respostas; // Espera um array de respostas
+  const usuarioId = req.usuarioId;
+  const respostas = req.body.respostas;
 
   if (!Array.isArray(respostas) || respostas.length === 0) {
     return res.status(400).json({ erro: 'Nenhuma resposta fornecida.' });
@@ -99,10 +100,10 @@ router.post('/', authMiddleware, async (req, res) => {
       usuarioId,
       assunto,
       acertou,
-      data: new Date()  // Supondo que a data da resposta seja a data atual
+      data: new Date()
     }));
 
-    await Resposta.insertMany(respostasParaSalvar);
+    await Desempenho.insertMany(respostasParaSalvar);
 
     res.status(201).json({ mensagem: 'Respostas salvas com sucesso.' });
 
