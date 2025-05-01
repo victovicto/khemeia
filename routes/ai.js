@@ -20,7 +20,7 @@ router.post('/composto', async (req, res) => {
       max_tokens: 300
     });
 
-    const resultado = response.data.choices[0].message.content || "Resposta não encontrada.";
+    const resultado = response.data.choices[0].message.content || "Resposta não encontrada";
 
     res.json({ resposta: resultado });
   } catch (err) {
