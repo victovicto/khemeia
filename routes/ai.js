@@ -10,7 +10,8 @@ router.post('/composto', async (req, res) => {
     return res.status(400).json({ erro: 'Nome do composto não fornecido.' });
   }
 
-  const prompt = `Me fale uma curiosidade e uma aplicação do composto químico chamado "${nome}" no cotidiano.`;
+  const prompt = `Me fale uma curiosidade em relação ao composto que seja interessante ao estudante de ensino médio e uma aplicação do composto químico chamado "${nome}" no cotidiano, e responda em português.`;
+
 
   try {
     const response = await togetherAPI.post('', {
