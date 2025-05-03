@@ -38,21 +38,41 @@ router.post('/gerar-perguntas', async (req, res) => {
     return res.status(400).json({ erro: 'Molfile não fornecido.' });
   }
 
-  // Prompt para gerar perguntas sobre a molécula
-  const prompt = `Considerando a molécula representada pelo arquivo Molfile abaixo, crie 5 perguntas básicas de química sobre ela, incluindo perguntas sobre sua nomenclatura, propriedades e estrutura. Formate as perguntas como um quiz de múltipla escolha, fornecendo as alternativas e indicando a resposta correta. O arquivo Molfile é: "${molfile}". Responda em português.`;
+  console.log('Molfile recebido:', molfile.substring(0, 100) + '...'); // Log para debug (primeiros 100 caracteres)
+
+  // Prompt melhorado para gerar perguntas mais estruturadas sobre a molécula
+  const prompt = `
+Analise o seguinte arquivo Molfile que representa uma estrutura molecular:
+
+\`\`\`
+${molfile}
+\`\`\`
+
+Com base nesta estrutura molecular, crie 5 perguntas de química relacionadas a essa molécula. 
+As perguntas devem ser adequadas para estudantes do ensino médio e devem abordar conceitos como:
+- Grupos funcionais presentes na molécula
+- Propriedades físico-químicas esperadas
+- Nomenclatura básica
+- Aplicações práticas de moléculas similares
+- Reações químicas típicas desta classe de compostos
+
+Responda apenas com as perguntas, uma em cada linha, sem numeração ou formatação adicional. 
+Não inclua alternativas ou respostas, apenas as perguntas.
+`;
 
   try {
     const response = await togetherAPI.post('', {
       model: "mistralai/Mistral-7B-Instruct-v0.1",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      max_tokens: 500 // Ajuste conforme necessário
+      max_tokens: 500
     });
 
     const resultado = response.data.choices[0].message.content || "Não foi possível gerar perguntas.";
+    console.log('Resposta da IA:', resultado);
 
-    // Formatar a resposta para uma estrutura amigável para o Flutter
-    const perguntas = formatQuizResponse(resultado);
+    // Processar a resposta para extrair perguntas individuais
+    const perguntas = processarPerguntas(resultado);
 
     res.json({ perguntas });
   } catch (err) {
@@ -61,24 +81,31 @@ router.post('/gerar-perguntas', async (req, res) => {
   }
 });
 
-// Função para formatar as perguntas do quiz
-function formatQuizResponse(response) {
-  // Exemplo de como você pode estruturar as perguntas retornadas
-  const perguntas = response.split('\n').map((linha, index) => {
-    // Exemplo: linha pode ser algo como "Pergunta: O que é ... | A. Opção 1 | B. Opção 2 | C. Opção 3"
-    const partes = linha.split('|');
-    if (partes.length < 4) return null; // Certifique-se de que há alternativas e resposta
-    return {
-      pergunta: partes[0].replace('Pergunta:', '').trim(),
-      alternativas: partes.slice(1, 4).map(opcao => opcao.trim()),
-      respostaCorreta: partes[4]?.trim()
-    };
-  }).filter(p => p); // Filtra as perguntas inválidas
+// Função para processar as perguntas recebidas da IA
+function processarPerguntas(texto) {
+  // Dividir o texto por quebras de linha e limpar
+  let linhas = texto.split('\n').filter(linha => 
+    linha.trim() !== '' && 
+    !linha.toLowerCase().includes('```') && 
+    !linha.toLowerCase().startsWith('pergunta')
+  );
 
-  return perguntas;
+  // Remover qualquer numeração no início das linhas (ex: "1. ", "1)", etc.)
+  linhas = linhas.map(linha => {
+    return linha.replace(/^\d+[\.\)\-]\s*/, '').trim();
+  });
+
+  // Filtrar para manter apenas as linhas que parecem perguntas (terminam com "?")
+  const perguntas = linhas.filter(linha => 
+    linha.trim().endsWith('?') || 
+    linha.includes('?')
+  );
+
+  // Limitar a 5 perguntas
+  return perguntas.slice(0, 5);
 }
- 
-// Endpoint para gerar o nome da molécula com IA
+
+// Endpoint para gerar o nome da molécula com IA (mantido para compatibilidade)
 router.post('/nome-molecula', async (req, res) => {
   const { molfile } = req.body;
 
@@ -105,5 +132,55 @@ router.post('/nome-molecula', async (req, res) => {
   }
 });
 
-export default router;
+// Novo endpoint combinado para análise completa da molécula
+router.post('/analisar-molecula', async (req, res) => {
+  const { molfile } = req.body;
 
+  if (!molfile) {
+    return res.status(400).json({ erro: 'Molfile não fornecido.' });
+  }
+
+  try {
+    // Gerar perguntas
+    const promptPerguntas = `
+Analise o seguinte arquivo Molfile que representa uma estrutura molecular:
+
+\`\`\`
+${molfile}
+\`\`\`
+
+Com base nesta estrutura molecular, crie 5 perguntas de química relacionadas a essa molécula. 
+As perguntas devem ser adequadas para estudantes do ensino médio e devem abordar conceitos como:
+- Grupos funcionais presentes na molécula
+- Propriedades físico-químicas esperadas
+- Nomenclatura básica
+- Aplicações práticas de moléculas similares
+- Reações químicas típicas desta classe de compostos
+
+Responda apenas com as perguntas, uma em cada linha, sem numeração ou formatação adicional.
+`;
+
+    const responsePerguntas = await togetherAPI.post('', {
+      model: "mistralai/Mistral-7B-Instruct-v0.1",
+      messages: [{ role: "user", content: promptPerguntas }],
+      temperature: 0.7,
+      max_tokens: 500
+    });
+
+    const resultadoPerguntas = responsePerguntas.data.choices[0].message.content || "";
+    const perguntas = processarPerguntas(resultadoPerguntas);
+
+    res.json({
+      perguntas: perguntas
+    });
+
+  } catch (err) {
+    console.error('Erro na análise da molécula:', err.response?.data || err.message);
+    res.status(500).json({ 
+      erro: 'Falha ao analisar molécula', 
+      detalhes: err.message 
+    });
+  }
+});
+
+export default router;
