@@ -30,17 +30,14 @@ router.post('/composto', async (req, res) => {
   }
 });
 
-// Endpoint para gerar perguntas sobre a molécula
+// Novo formato: perguntas com alternativas baseadas na molécula
 router.post('/gerar-perguntas', async (req, res) => {
-  const { molfile } = req.body; // Molfile ou outro formato da molécula (como SMILES)
+  const { molfile } = req.body;
 
   if (!molfile) {
     return res.status(400).json({ erro: 'Molfile não fornecido.' });
   }
 
-  console.log('Molfile recebido:', molfile.substring(0, 100) + '...'); // Log para debug (primeiros 100 caracteres)
-
-  // Prompt melhorado para gerar perguntas mais estruturadas sobre a molécula
   const prompt = `
 Analise o seguinte arquivo Molfile que representa uma estrutura molecular:
 
@@ -48,16 +45,30 @@ Analise o seguinte arquivo Molfile que representa uma estrutura molecular:
 ${molfile}
 \`\`\`
 
-Com base nesta estrutura molecular, crie 5 perguntas de química relacionadas a essa molécula. 
-As perguntas devem ser adequadas para estudantes do ensino médio e devem abordar conceitos como:
-- Grupos funcionais presentes na molécula
-- Propriedades físico-químicas esperadas
-- Nomenclatura básica
-- Aplicações práticas de moléculas similares
-- Reações químicas típicas desta classe de compostos
+Com base nesta molécula, gere 5 perguntas de múltipla escolha sobre ela, voltadas para estudantes do ensino médio.
 
-Responda apenas com as perguntas, uma em cada linha, sem numeração ou formatação adicional. 
-Não inclua alternativas ou respostas, apenas as perguntas.
+Cada pergunta deve conter:
+- Enunciado direcionado à molécula analisada
+- Quatro alternativas (A, B, C, D)
+- Indicação da resposta correta
+
+As perguntas devem abordar:
+- Grupos funcionais presentes
+- Propriedades físico-químicas da molécula
+- Nome IUPAC provável
+- Aplicações práticas
+- Reações químicas típicas dessa molécula
+
+Formato da resposta:
+
+Pergunta 1: [enunciado]  
+A) [alternativa A]  
+B) [alternativa B]  
+C) [alternativa C]  
+D) [alternativa D]  
+Resposta correta: [letra]
+
+(Repita para 5 perguntas)
 `;
 
   try {
@@ -65,47 +76,19 @@ Não inclua alternativas ou respostas, apenas as perguntas.
       model: "mistralai/Mistral-7B-Instruct-v0.1",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      max_tokens: 500
+      max_tokens: 1000
     });
 
-    const resultado = response.data.choices[0].message.content || "Não foi possível gerar perguntas.";
-    console.log('Resposta da IA:', resultado);
-
-    // Processar a resposta para extrair perguntas individuais
-    const perguntas = processarPerguntas(resultado);
+    const resultado = response.data.choices[0].message.content || "";
+    const perguntas = processarPerguntasComAlternativas(resultado);
 
     res.json({ perguntas });
   } catch (err) {
-    console.error('Erro na requisição Together AI:', err.response?.data || err.message);
+    console.error('Erro ao gerar perguntas:', err.response?.data || err.message);
     res.status(500).json({ erro: 'Falha ao gerar perguntas', detalhes: err.message });
   }
 });
 
-// Função para processar as perguntas recebidas da IA
-function processarPerguntas(texto) {
-  // Dividir o texto por quebras de linha e limpar
-  let linhas = texto.split('\n').filter(linha => 
-    linha.trim() !== '' && 
-    !linha.toLowerCase().includes('```') && 
-    !linha.toLowerCase().startsWith('pergunta')
-  );
-
-  // Remover qualquer numeração no início das linhas (ex: "1. ", "1)", etc.)
-  linhas = linhas.map(linha => {
-    return linha.replace(/^\d+[\.\)\-]\s*/, '').trim();
-  });
-
-  // Filtrar para manter apenas as linhas que parecem perguntas (terminam com "?")
-  const perguntas = linhas.filter(linha => 
-    linha.trim().endsWith('?') || 
-    linha.includes('?')
-  );
-
-  // Limitar a 5 perguntas
-  return perguntas.slice(0, 5);
-}
-
-// Endpoint para gerar o nome da molécula com IA (mantido para compatibilidade)
 router.post('/nome-molecula', async (req, res) => {
   const { molfile } = req.body;
 
@@ -132,7 +115,7 @@ router.post('/nome-molecula', async (req, res) => {
   }
 });
 
-// Novo endpoint combinado para análise completa da molécula
+// Endpoint combinado para análise com perguntas completas
 router.post('/analisar-molecula', async (req, res) => {
   const { molfile } = req.body;
 
@@ -140,47 +123,80 @@ router.post('/analisar-molecula', async (req, res) => {
     return res.status(400).json({ erro: 'Molfile não fornecido.' });
   }
 
-  try {
-    // Gerar perguntas
-    const promptPerguntas = `
+  const prompt = `
 Analise o seguinte arquivo Molfile que representa uma estrutura molecular:
 
 \`\`\`
 ${molfile}
 \`\`\`
 
-Com base nesta estrutura molecular, crie 5 perguntas de química relacionadas a essa molécula. 
-As perguntas devem ser adequadas para estudantes do ensino médio e devem abordar conceitos como:
-- Grupos funcionais presentes na molécula
-- Propriedades físico-químicas esperadas
-- Nomenclatura básica
-- Aplicações práticas de moléculas similares
-- Reações químicas típicas desta classe de compostos
+Com base nesta molécula, gere 5 perguntas de múltipla escolha sobre ela, voltadas para estudantes do ensino médio.
 
-Responda apenas com as perguntas, uma em cada linha, sem numeração ou formatação adicional.
+Cada pergunta deve conter:
+- Enunciado direcionado à molécula analisada
+- Quatro alternativas (A, B, C, D)
+- Indicação da resposta correta
+
+As perguntas devem abordar:
+- Grupos funcionais presentes
+- Propriedades físico-químicas da molécula
+- Nome IUPAC provável
+- Aplicações práticas
+- Reações químicas típicas dessa molécula
+
+Formato da resposta:
+
+Pergunta 1: [enunciado]  
+A) [alternativa A]  
+B) [alternativa B]  
+C) [alternativa C]  
+D) [alternativa D]  
+Resposta correta: [letra]
+
+(Repita para 5 perguntas)
 `;
 
-    const responsePerguntas = await togetherAPI.post('', {
+  try {
+    const response = await togetherAPI.post('', {
       model: "mistralai/Mistral-7B-Instruct-v0.1",
-      messages: [{ role: "user", content: promptPerguntas }],
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      max_tokens: 500
+      max_tokens: 1000
     });
 
-    const resultadoPerguntas = responsePerguntas.data.choices[0].message.content || "";
-    const perguntas = processarPerguntas(resultadoPerguntas);
+    const resultado = response.data.choices[0].message.content || "";
+    const perguntas = processarPerguntasComAlternativas(resultado);
 
-    res.json({
-      perguntas: perguntas
-    });
-
+    res.json({ perguntas });
   } catch (err) {
     console.error('Erro na análise da molécula:', err.response?.data || err.message);
-    res.status(500).json({ 
-      erro: 'Falha ao analisar molécula', 
-      detalhes: err.message 
-    });
+    res.status(500).json({ erro: 'Falha ao analisar molécula', detalhes: err.message });
   }
 });
+
+// Função para processar perguntas com alternativas
+function processarPerguntasComAlternativas(texto) {
+  const blocos = texto.split(/Pergunta\s*\d+:/i).filter(b => b.trim());
+
+  return blocos.map(bloco => {
+    const enunciadoMatch = bloco.match(/^(.*?)(?:\n|$)/);
+    const alternativas = {};
+    const alternativaRegex = /([A-D])\)\s*(.*)/g;
+    let match;
+
+    while ((match = alternativaRegex.exec(bloco)) !== null) {
+      alternativas[match[1]] = match[2].trim();
+    }
+
+    const respostaMatch = bloco.match(/Resposta\s+correta\s*:\s*([A-D])/i);
+    const respostaCorreta = respostaMatch ? respostaMatch[1].toUpperCase() : null;
+
+    return {
+      enunciado: enunciadoMatch ? enunciadoMatch[1].trim() : '',
+      alternativas,
+      correta: respostaCorreta
+    };
+  });
+}
 
 export default router;
