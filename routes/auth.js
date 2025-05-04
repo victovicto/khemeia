@@ -7,12 +7,12 @@ const router = express.Router();
 
 // Cadastro
 router.post('/cadastro', async (req, res) => {
-  const { nome, email, senha } = req.body;
+  const { nome, email, senha } = req.body; 
 
   try {
     const usuarioExistente = await Usuario.findOne({ email });
     if (usuarioExistente) {
-      return res.status(400).json({ erro: 'Email já cadastrado' });
+      return res.status(400).json({ erro: 'Email já cadastrado.' });
     }
 
     const senhaHash = await bcrypt.hash(senha, 10);
