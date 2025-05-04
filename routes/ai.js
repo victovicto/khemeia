@@ -22,7 +22,6 @@ router.post('/composto', async (req, res) => {
     });
 
     const resultado = response.data.choices[0].message.content || "Resposta não encontrada";
-
     res.json({ resposta: resultado });
   } catch (err) {
     console.error('Erro na requisição Together AI:', err.response?.data || err.message);
@@ -30,7 +29,7 @@ router.post('/composto', async (req, res) => {
   }
 });
 
-// Novo formato: perguntas com alternativas baseadas na molécula
+// Endpoint para gerar perguntas com alternativas baseadas no Molfile
 router.post('/gerar-perguntas', async (req, res) => {
   const { molfile } = req.body;
 
@@ -89,6 +88,7 @@ Resposta correta: [letra]
   }
 });
 
+// Endpoint para fornecer nome IUPAC da molécula
 router.post('/nome-molecula', async (req, res) => {
   const { molfile } = req.body;
 
@@ -107,7 +107,6 @@ router.post('/nome-molecula', async (req, res) => {
     });
 
     const nome = response.data.choices[0].message.content.trim();
-
     res.json({ nome });
   } catch (err) {
     console.error('Erro ao gerar nome da molécula:', err.response?.data || err.message);
@@ -115,7 +114,7 @@ router.post('/nome-molecula', async (req, res) => {
   }
 });
 
-// Endpoint combinado para análise com perguntas completas
+// Endpoint combinado para análise completa da molécula (perguntas e nome IUPAC)
 router.post('/analisar-molecula', async (req, res) => {
   const { molfile } = req.body;
 
