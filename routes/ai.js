@@ -3,7 +3,7 @@ import togetherAPI from '../config/together.js';
 
 const router = express.Router();
 
-// Endpoint para fornecer curiosidades sobre o composto
+// Endpoint: Curiosidade + aplicação do composto
 router.post('/composto', async (req, res) => {
   const { nome } = req.body;
 
@@ -11,7 +11,7 @@ router.post('/composto', async (req, res) => {
     return res.status(400).json({ erro: 'Nome do composto não fornecido.' });
   }
 
-  const prompt = `Me fale uma curiosidade em relação ao composto que seja interessante ao estudante de ensino médio e uma aplicação do composto químico chamado "${nome}" no cotidiano, e responda em português.`;
+  const prompt = `Me fale uma curiosidade interessante para estudantes do ensino médio e uma aplicação cotidiana do composto químico chamado "${nome}". Responda em português.`;
 
   try {
     const response = await togetherAPI.post('', {
@@ -21,7 +21,7 @@ router.post('/composto', async (req, res) => {
       max_tokens: 300
     });
 
-    const resultado = response.data.choices[0].message.content || "Resposta não encontrada";
+    const resultado = response.data.choices?.[0]?.message?.content || "Resposta não encontrada.";
     res.json({ resposta: resultado });
   } catch (err) {
     console.error('Erro na requisição Together AI:', err.response?.data || err.message);
@@ -29,66 +29,7 @@ router.post('/composto', async (req, res) => {
   }
 });
 
-// Endpoint para gerar perguntas com alternativas baseadas no Molfile
-router.post('/gerar-perguntas', async (req, res) => {
-  const { molfile } = req.body;
-
-  if (!molfile) {
-    return res.status(400).json({ erro: 'Molfile não fornecido.' });
-  }
-
-  const prompt = `
-Analise o seguinte arquivo Molfile que representa uma estrutura molecular:
-
-\`\`\`
-${molfile}
-\`\`\`
-
-Com base nesta molécula, gere 5 perguntas de múltipla escolha sobre ela, voltadas para estudantes do ensino médio.
-
-Cada pergunta deve conter:
-- Enunciado direcionado à molécula analisada
-- Quatro alternativas (A, B, C, D)
-- Indicação da resposta correta
-
-As perguntas devem abordar:
-- Grupos funcionais presentes
-- Propriedades físico-químicas da molécula
-- Nome IUPAC provável, em português
-- Aplicações práticas
-- Reações químicas típicas dessa molécula
-
-Formato da resposta:
-
-Pergunta 1: [enunciado]  
-A) [alternativa A]  
-B) [alternativa B]  
-C) [alternativa C]  
-D) [alternativa D]  
-Resposta correta: [letra]
-
-(Repita para 5 perguntas)
-`;
-
-  try {
-    const response = await togetherAPI.post('', {
-      model: "mistralai/Mistral-7B-Instruct-v0.1",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 1000
-    });
-
-    const resultado = response.data.choices[0].message.content || "";
-    const perguntas = processarPerguntasComAlternativas(resultado);
-
-    res.json({ perguntas });
-  } catch (err) {
-    console.error('Erro ao gerar perguntas:', err.response?.data || err.message);
-    res.status(500).json({ erro: 'Falha ao gerar perguntas', detalhes: err.message });
-  }
-});
-
-// Endpoint para fornecer nome IUPAC da molécula
+// Endpoint: Nome IUPAC da molécula
 router.post('/nome-molecula', async (req, res) => {
   const { molfile } = req.body;
 
@@ -96,7 +37,7 @@ router.post('/nome-molecula', async (req, res) => {
     return res.status(400).json({ erro: 'Molfile não fornecido.' });
   }
 
-  const prompt = `Analise o seguinte Molfile e forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português. Molfile: """${molfile}""".`;
+  const prompt = `Analise o seguinte Molfile e forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português.\nMolfile:\n"""${molfile}"""`;
 
   try {
     const response = await togetherAPI.post('', {
@@ -106,7 +47,7 @@ router.post('/nome-molecula', async (req, res) => {
       max_tokens: 100
     });
 
-    const nome = response.data.choices[0].message.content.trim();
+    const nome = response.data.choices?.[0]?.message?.content?.trim() || "Nome não identificado";
     res.json({ nome });
   } catch (err) {
     console.error('Erro ao gerar nome da molécula:', err.response?.data || err.message);
@@ -114,46 +55,25 @@ router.post('/nome-molecula', async (req, res) => {
   }
 });
 
-// Endpoint combinado para análise completa da molécula (perguntas e nome IUPAC)
+// Endpoint: Geração de perguntas de múltipla escolha
+router.post('/gerar-perguntas', async (req, res) => {
+  await gerarPerguntasHandler(req, res);
+});
+
+// Endpoint: Análise completa da molécula (nome + perguntas)
 router.post('/analisar-molecula', async (req, res) => {
+  await gerarPerguntasHandler(req, res);
+});
+
+// Função reutilizável para geração de perguntas
+async function gerarPerguntasHandler(req, res) {
   const { molfile } = req.body;
 
   if (!molfile) {
     return res.status(400).json({ erro: 'Molfile não fornecido.' });
   }
 
-  const prompt = `
-Analise o seguinte arquivo Molfile que representa uma estrutura molecular:
-
-\`\`\`
-${molfile}
-\`\`\`
-
-Com base nesta molécula, gere 5 perguntas de múltipla escolha sobre ela, voltadas para estudantes do ensino médio.
-
-Cada pergunta deve conter:
-- Enunciado direcionado à molécula analisada
-- Quatro alternativas (A, B, C, D)
-- Indicação da resposta correta
-
-As perguntas devem abordar:
-- Grupos funcionais presentes
-- Propriedades físico-químicas da molécula
-- Nome IUPAC provável
-- Aplicações práticas
-- Reações químicas típicas dessa molécula
-
-Formato da resposta:
-
-Pergunta 1: [enunciado]  
-A) [alternativa A]  
-B) [alternativa B]  
-C) [alternativa C]  
-D) [alternativa D]  
-Resposta correta: [letra]
-
-(Repita para 5 perguntas)
-`;
+  const prompt = gerarPromptPerguntas(molfile);
 
   try {
     const response = await togetherAPI.post('', {
@@ -163,17 +83,49 @@ Resposta correta: [letra]
       max_tokens: 1000
     });
 
-    const resultado = response.data.choices[0].message.content || "";
-    const perguntas = processarPerguntasComAlternativas(resultado);
-
+    const resultado = response.data.choices?.[0]?.message?.content || "";
+    const perguntas = processarPerguntasComAlternativas(resultado).filter(p => p);
     res.json({ perguntas });
   } catch (err) {
-    console.error('Erro na análise da molécula:', err.response?.data || err.message);
-    res.status(500).json({ erro: 'Falha ao analisar molécula', detalhes: err.message });
+    console.error('Erro ao gerar perguntas:', err.response?.data || err.message);
+    res.status(500).json({ erro: 'Falha ao gerar perguntas', detalhes: err.message });
   }
-});
+}
 
-// Função para processar perguntas com alternativas
+// Função auxiliar para gerar prompt
+function gerarPromptPerguntas(molfile) {
+  return `
+Analise o seguinte arquivo Molfile:
+
+\`\`\`
+${molfile}
+\`\`\`
+
+Com base na estrutura molecular, gere 5 perguntas de múltipla escolha voltadas para o ensino médio.
+
+Cada pergunta deve conter:
+- Enunciado
+- Quatro alternativas (A, B, C, D)
+- Indicação da resposta correta
+
+As perguntas devem abordar:
+- Grupos funcionais presentes
+- Propriedades físico-químicas
+- Nome IUPAC (em português)
+- Aplicações práticas
+- Reações típicas
+
+Formato:
+Pergunta 1: [enunciado]  
+A) [alternativa A]  
+B) [alternativa B]  
+C) [alternativa C]  
+D) [alternativa D]  
+Resposta correta: [letra]
+`;
+}
+
+// Função auxiliar para estruturar perguntas
 function processarPerguntasComAlternativas(texto) {
   const blocos = texto.split(/Pergunta\s*\d+:/i).filter(b => b.trim());
 
@@ -190,8 +142,13 @@ function processarPerguntasComAlternativas(texto) {
     const respostaMatch = bloco.match(/Resposta\s+correta\s*:\s*([A-D])/i);
     const respostaCorreta = respostaMatch ? respostaMatch[1].toUpperCase() : null;
 
+    if (!enunciadoMatch || Object.keys(alternativas).length < 4 || !respostaCorreta) {
+      console.warn("Pergunta mal formatada detectada. Ignorando.");
+      return null;
+    }
+
     return {
-      enunciado: enunciadoMatch ? enunciadoMatch[1].trim() : '',
+      enunciado: enunciadoMatch[1].trim(),
       alternativas,
       correta: respostaCorreta
     };
