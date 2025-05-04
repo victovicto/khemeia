@@ -54,7 +54,7 @@ Cada pergunta deve conter:
 As perguntas devem abordar:
 - Grupos funcionais presentes
 - Propriedades físico-químicas da molécula
-- Nome IUPAC provável
+- Nome IUPAC provável, em português
 - Aplicações práticas
 - Reações químicas típicas dessa molécula
 
