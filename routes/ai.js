@@ -1,7 +1,32 @@
 import express from 'express'; 
 import togetherAPI from '../config/together.js';
+import cors from 'cors'; // Certifique-se de importar o módulo cors
 
 const router = express.Router();
+
+// Configuração do CORS para permitir requisições do frontend
+router.use(cors({
+  origin: function(origin, callback) {
+    // Permitir requisições sem origem (como Postman, curl, etc)
+    if (!origin) return callback(null, true);
+    
+    // Lista de origens permitidas
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5500',
+      'http://127.0.0.1:5500',
+      'https://khemeia.onrender.com'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Accept', 'Origin', 'X-Requested-With']
+}));
 
 // Endpoint: Curiosidade + aplicação do composto
 router.post('/composto', async (req, res) => {
@@ -81,9 +106,13 @@ router.post('/analisar-molecula', async (req, res) => {
   if (moleculeData.startsWith('SMILES:')) {
     formatoOriginal = 'smiles';
     console.log('Recebendo formato SMILES');
+    // Extrair apenas o SMILES sem o prefixo
+    moleculeData = moleculeData.replace('SMILES:', '').trim();
   } else if (moleculeData.startsWith('KET:')) {
     formatoOriginal = 'ket';
     console.log('Recebendo formato KET');
+    // Extrair apenas o KET sem o prefixo
+    moleculeData = moleculeData.replace('KET:', '').trim();
   }
 
   console.log(`Analisando molécula (${formatoOriginal}) com ${moleculeData.length} caracteres...`);
