@@ -1,4 +1,4 @@
-import express from 'express';
+import express from 'express'; 
 import togetherAPI from '../config/together.js';
 
 const router = express.Router();
@@ -7,9 +7,11 @@ const router = express.Router();
 router.post('/composto', async (req, res) => {
   const { nome } = req.body;
 
-  if (!nome) {
-    return res.status(400).json({ erro: 'Nome do composto não fornecido.' });
+  if (typeof nome !== 'string' || !nome.trim()) {
+    return res.status(400).json({ erro: 'Nome do composto não fornecido ou inválido.' });
   }
+
+  console.log(`Recebido nome para curiosidade: ${nome}`);
 
   const prompt = `Me fale uma curiosidade interessante para estudantes do ensino médio e uma aplicação cotidiana do composto químico chamado "${nome}". Responda em português.`;
 
@@ -33,9 +35,11 @@ router.post('/composto', async (req, res) => {
 router.post('/nome-molecula', async (req, res) => {
   const { molfile } = req.body;
 
-  if (!molfile) {
-    return res.status(400).json({ erro: 'Molfile não fornecido.' });
+  if (typeof molfile !== 'string' || !molfile.trim()) {
+    return res.status(400).json({ erro: 'Molfile não fornecido ou inválido.' });
   }
+
+  console.log(`Recebido Molfile com ${molfile.length} caracteres.`);
 
   const prompt = `Analise o seguinte Molfile e forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português.\nMolfile:\n"""${molfile}"""`;
 
@@ -62,20 +66,90 @@ router.post('/gerar-perguntas', async (req, res) => {
 
 // Endpoint: Análise completa da molécula (nome + perguntas)
 router.post('/analisar-molecula', async (req, res) => {
-  await gerarPerguntasHandler(req, res);
+  // Aceitar tanto "estrutura" quanto "molfile" no corpo da requisição para compatibilidade
+  const { estrutura, tipo, molfile } = req.body;
+  
+  // Use molfile diretamente ou a estrutura fornecida (compatibilidade com versões antigas)
+  const moleculeData = molfile || estrutura || "";
+  
+  if (typeof moleculeData !== 'string' || !moleculeData.trim()) {
+    return res.status(400).json({ erro: 'Dados da molécula não fornecidos ou inválidos.' });
+  }
+
+  console.log(`Analisando molécula com ${moleculeData.length} caracteres...`);
+
+  try {
+    // Tratamento seguro dos dados da molécula
+    const sanitizedMoleculeData = moleculeData.trim();
+    
+    const promptNome = `Analise o seguinte Molfile e forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português.\nMolfile:\n"""${sanitizedMoleculeData}"""`;
+    const promptPerguntas = gerarPromptPerguntas(sanitizedMoleculeData);
+
+    // Executar chamadas à API em paralelo para melhor performance
+    const [resNome, resPerguntas] = await Promise.all([
+      togetherAPI.post('', {
+        model: "mistralai/Mistral-7B-Instruct-v0.1",
+        messages: [{ role: "user", content: promptNome }],
+        temperature: 0.5,
+        max_tokens: 100
+      }),
+      togetherAPI.post('', {
+        model: "mistralai/Mistral-7B-Instruct-v0.1",
+        messages: [{ role: "user", content: promptPerguntas }],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    ]);
+
+    // Extrair e validar respostas
+    if (!resNome.data || !resNome.data.choices || !resPerguntas.data || !resPerguntas.data.choices) {
+      throw new Error('Resposta incompleta da API de IA');
+    }
+
+    const nome = resNome.data.choices[0]?.message?.content?.trim() || "Nome não identificado";
+    const perguntasTexto = resPerguntas.data.choices[0]?.message?.content || "";
+    
+    // Processar as perguntas com tratamento de erro
+    let perguntas = [];
+    try {
+      perguntas = processarPerguntasComAlternativas(perguntasTexto).filter(p => p);
+    } catch (err) {
+      console.error('Erro ao processar perguntas:', err);
+      perguntas = [];
+    }
+    
+    // Sempre retornar um JSON válido
+    res.json({ nome, perguntas });
+  } catch (err) {
+    console.error('Erro detalhado ao analisar molécula:', err);
+    
+    // Garantir uma resposta de erro consistente
+    res.status(500).json({ 
+      erro: 'Falha ao analisar molécula', 
+      detalhes: err.message || 'Erro desconhecido no servidor' 
+    });
+  }
 });
 
 // Função reutilizável para geração de perguntas
 async function gerarPerguntasHandler(req, res) {
-  const { molfile } = req.body;
-
-  if (!molfile) {
-    return res.status(400).json({ erro: 'Molfile não fornecido.' });
+  // Aceitar tanto "estrutura" quanto "molfile" no corpo da requisição para compatibilidade
+  const { estrutura, molfile } = req.body;
+  
+  // Use molfile diretamente ou a estrutura fornecida (compatibilidade com versões antigas)
+  const moleculeData = molfile || estrutura || "";
+  
+  if (typeof moleculeData !== 'string' || !moleculeData.trim()) {
+    return res.status(400).json({ erro: 'Dados da molécula não fornecidos ou inválidos.' });
   }
 
-  const prompt = gerarPromptPerguntas(molfile);
+  console.log(`Gerando perguntas para molécula com ${moleculeData.length} caracteres.`);
 
   try {
+    // Sanitização dos dados da molécula
+    const sanitizedMoleculeData = moleculeData.trim();
+    const prompt = gerarPromptPerguntas(sanitizedMoleculeData);
+
     const response = await togetherAPI.post('', {
       model: "mistralai/Mistral-7B-Instruct-v0.1",
       messages: [{ role: "user", content: prompt }],
@@ -83,22 +157,41 @@ async function gerarPerguntasHandler(req, res) {
       max_tokens: 1000
     });
 
-    const resultado = response.data.choices?.[0]?.message?.content || "";
-    const perguntas = processarPerguntasComAlternativas(resultado).filter(p => p);
+    // Validar resposta da API
+    if (!response.data || !response.data.choices) {
+      throw new Error('Resposta inválida da API de IA');
+    }
+
+    const resultado = response.data.choices[0]?.message?.content || "";
+    
+    // Processar perguntas com tratamento de erro
+    let perguntas = [];
+    try {
+      perguntas = processarPerguntasComAlternativas(resultado).filter(p => p);
+    } catch (err) {
+      console.error('Erro ao processar texto das perguntas:', err);
+      perguntas = [];
+    }
+    
     res.json({ perguntas });
   } catch (err) {
-    console.error('Erro ao gerar perguntas:', err.response?.data || err.message);
-    res.status(500).json({ erro: 'Falha ao gerar perguntas', detalhes: err.message });
+    console.error('Erro detalhado ao gerar perguntas:', err);
+    res.status(500).json({ erro: 'Falha ao gerar perguntas', detalhes: err.message || 'Erro desconhecido' });
   }
 }
 
-// Função auxiliar para gerar prompt
+// Função auxiliar para gerar prompt com validação
 function gerarPromptPerguntas(molfile) {
+  if (!molfile || typeof molfile !== 'string') {
+    console.warn('Molfile inválido recebido na função gerarPromptPerguntas');
+    return '';
+  }
+  
   return `
 Analise o seguinte arquivo Molfile:
 
 \`\`\`
-${molfile}
+${molfile.trim()}
 \`\`\`
 
 Com base na estrutura molecular, gere 5 perguntas de múltipla escolha voltadas para o ensino médio.
@@ -125,34 +218,81 @@ Resposta correta: [letra]
 `;
 }
 
-// Função auxiliar para estruturar perguntas
+// Função auxiliar para estruturar perguntas com melhor tratamento de erros
 function processarPerguntasComAlternativas(texto) {
-  const blocos = texto.split(/Pergunta\s*\d+:/i).filter(b => b.trim());
+  if (!texto || typeof texto !== 'string') {
+    console.warn('Texto vazio ou inválido recebido para processamento de perguntas');
+    return [];
+  }
 
-  return blocos.map(bloco => {
-    const enunciadoMatch = bloco.match(/^(.*?)(?:\n|$)/);
-    const alternativas = {};
-    const alternativaRegex = /([A-D])\)\s*(.*)/g;
-    let match;
+  try {
+    // Dividir o texto em blocos de perguntas
+    const blocos = texto.split(/Pergunta\s*\d+:/i).filter(b => b.trim());
+    
+    // Processar cada bloco
+    return blocos.map(bloco => {
+      try {
+        // Extrair o enunciado (primeira linha)
+        const enunciadoMatch = bloco.match(/^(.*?)(?:\n|$)/);
+        if (!enunciadoMatch) {
+          console.warn('Enunciado não encontrado em bloco de pergunta');
+          return null;
+        }
+        
+        // Extrair alternativas
+        const alternativas = {};
+        const alternativaRegex = /([A-D])\)\s*(.*?)(?=\s*(?:[A-D]\)|Resposta|$))/gs;
+        
+        let match;
+        while ((match = alternativaRegex.exec(bloco)) !== null) {
+          alternativas[match[1]] = match[2].trim();
+        }
+        
+        // Se não encontrou alternativas com a regex acima, tenta outra abordagem
+        if (Object.keys(alternativas).length < 4) {
+          const linhas = bloco.split('\n');
+          for (const linha of linhas) {
+            const altMatch = linha.match(/^([A-D])\)\s*(.*)/);
+            if (altMatch) {
+              alternativas[altMatch[1]] = altMatch[2].trim();
+            }
+          }
+        }
 
-    while ((match = alternativaRegex.exec(bloco)) !== null) {
-      alternativas[match[1]] = match[2].trim();
-    }
+        // Extrair resposta correta
+        const respostaMatch = bloco.match(/Resposta\s+correta\s*:\s*([A-D])/i);
+        const respostaCorreta = respostaMatch ? respostaMatch[1].toUpperCase() : null;
 
-    const respostaMatch = bloco.match(/Resposta\s+correta\s*:\s*([A-D])/i);
-    const respostaCorreta = respostaMatch ? respostaMatch[1].toUpperCase() : null;
+        // Validar se temos todos os componentes necessários
+        if (!enunciadoMatch || Object.keys(alternativas).length < 4 || !respostaCorreta) {
+          console.warn("Pergunta mal formatada detectada. Detalhes:", {
+            temEnunciado: !!enunciadoMatch,
+            numAlternativas: Object.keys(alternativas).length,
+            temResposta: !!respostaCorreta
+          });
+          return null;
+        }
 
-    if (!enunciadoMatch || Object.keys(alternativas).length < 4 || !respostaCorreta) {
-      console.warn("Pergunta mal formatada detectada. Ignorando.");
-      return null;
-    }
-
-    return {
-      enunciado: enunciadoMatch[1].trim(),
-      alternativas,
-      correta: respostaCorreta
-    };
-  });
+        // Objeto de pergunta válida
+        return {
+          enunciado: enunciadoMatch[1].trim(),
+          alternativas: alternativas,
+          correta: respostaCorreta
+        };
+      } catch (err) {
+        console.error('Erro ao processar bloco de pergunta:', err);
+        return null;
+      }
+    }).filter(Boolean); // Filtrar possíveis valores null
+  } catch (err) {
+    console.error('Erro geral no processarPerguntasComAlternativas:', err);
+    return [];
+  }
 }
+
+// Endpoint de health-check
+router.get('/ping', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 
 export default router;
