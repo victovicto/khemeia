@@ -70,20 +70,37 @@ router.post('/analisar-molecula', async (req, res) => {
   const { estrutura, tipo, molfile } = req.body;
   
   // Use molfile diretamente ou a estrutura fornecida (compatibilidade com versões antigas)
-  const moleculeData = molfile || estrutura || "";
+  let moleculeData = molfile || estrutura || "";
   
   if (typeof moleculeData !== 'string' || !moleculeData.trim()) {
     return res.status(400).json({ erro: 'Dados da molécula não fornecidos ou inválidos.' });
   }
 
-  console.log(`Analisando molécula com ${moleculeData.length} caracteres...`);
+  // Verificar se estamos recebendo um formato alternativo (SMILES ou KET)
+  let formatoOriginal = 'molfile';
+  if (moleculeData.startsWith('SMILES:')) {
+    formatoOriginal = 'smiles';
+    console.log('Recebendo formato SMILES');
+  } else if (moleculeData.startsWith('KET:')) {
+    formatoOriginal = 'ket';
+    console.log('Recebendo formato KET');
+  }
+
+  console.log(`Analisando molécula (${formatoOriginal}) com ${moleculeData.length} caracteres...`);
 
   try {
     // Tratamento seguro dos dados da molécula
     const sanitizedMoleculeData = moleculeData.trim();
     
-    const promptNome = `Analise o seguinte Molfile e forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português.\nMolfile:\n"""${sanitizedMoleculeData}"""`;
-    const promptPerguntas = gerarPromptPerguntas(sanitizedMoleculeData);
+    // Ajustar prompt com base no formato recebido
+    const promptBase = formatoOriginal === 'molfile' 
+      ? `Analise o seguinte Molfile e`
+      : formatoOriginal === 'smiles'
+        ? `Analise a seguinte notação SMILES e`
+        : `Analise a seguinte representação química e`;
+    
+    const promptNome = `${promptBase} forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português.\nDados:\n"""${sanitizedMoleculeData}"""`;
+    const promptPerguntas = gerarPromptPerguntas(sanitizedMoleculeData, formatoOriginal);
 
     // Executar chamadas à API em paralelo para melhor performance
     const [resNome, resPerguntas] = await Promise.all([
@@ -181,17 +198,24 @@ async function gerarPerguntasHandler(req, res) {
 }
 
 // Função auxiliar para gerar prompt com validação
-function gerarPromptPerguntas(molfile) {
-  if (!molfile || typeof molfile !== 'string') {
-    console.warn('Molfile inválido recebido na função gerarPromptPerguntas');
+function gerarPromptPerguntas(moleculeData, formato = 'molfile') {
+  if (!moleculeData || typeof moleculeData !== 'string') {
+    console.warn('Dados da molécula inválidos recebidos na função gerarPromptPerguntas');
     return '';
   }
   
+  // Ajustar texto do prompt baseado no formato
+  const formatoPrompt = formato === 'molfile' 
+    ? 'arquivo Molfile' 
+    : formato === 'smiles' 
+      ? 'código SMILES' 
+      : 'representação química';
+  
   return `
-Analise o seguinte arquivo Molfile:
+Analise a seguinte ${formatoPrompt}:
 
 \`\`\`
-${molfile.trim()}
+${moleculeData.trim()}
 \`\`\`
 
 Com base na estrutura molecular, gere 5 perguntas de múltipla escolha voltadas para o ensino médio.
