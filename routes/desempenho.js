@@ -1,46 +1,74 @@
 import express from 'express';
-import autenticarToken from '../middleware/authid.js';  // Importando o middleware corretamente
-import Desempenho from '../models/desempenhos.js';  // Certifique-se de que o modelo esteja correto
+import mongoose from 'mongoose';
+import autenticarToken from '../middleware/authid.js';
+import Desempenho from '../models/desempenhos.js';
+import Usuario from '../models/usuario.js'; // Adicionei a importação do modelo de usuário
 
 const router = express.Router();
 
-// Rota POST /desempenho (Salvar uma resposta do round)
-router.post('/', autenticarToken, async (req, res) => {  // Usando o middleware de autenticação
-  const usuarioId = req.usuarioId;  // Agora o usuarioId está disponível através do middleware
-  const { questaoId, assunto, acertou } = req.body;
+// Rota GET /desempenho - Retorna o desempenho completo de um usuário
+router.get('/', autenticarToken, async (req, res) => {
+  const usuarioId = req.usuarioId;  // Obtendo o usuarioId do token
 
-  console.log('Resposta recebida:', { questaoId, assunto, acertou }); // 🔍 Verificando o que chega do Flutter
-
-  // Validação das respostas
-  if (!questaoId || typeof questaoId !== 'string' || questaoId.trim() === '') {
-    return res.status(400).json({ erro: 'Questão inválida.' });
-  }
-
-  if (typeof acertou !== 'boolean') {
-    return res.status(400).json({ erro: 'Valor de "acertou" inválido.' });
-  }
-
-  if (!assunto || typeof assunto !== 'string' || assunto.trim() === '') {
-    return res.status(400).json({ erro: 'Assunto inválido.' });
+  // Validação do formato do usuarioId
+  if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+    return res.status(400).json({ erro: 'ID de usuário inválido.' });
   }
 
   try {
-    // Preparando para salvar no banco
-    const respostaParaSalvar = {
-      usuarioId,
-      questaoId,
-      assunto,
-      acertou,
-      data: new Date(),
-    };
+    // Verificando se o usuário existe
+    const usuario = await Usuario.findById(usuarioId);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+    }
 
-    await Desempenho.create(respostaParaSalvar);  // Salva a resposta no banco de dados
+    // Agregando os dados para calcular o desempenho
+    const desempenho = await Desempenho.aggregate([
+      { $match: { usuarioId: mongoose.Types.ObjectId(usuarioId) } }, // Filtra pelo usuário
+      { $group: { 
+          _id: "$assunto",
+          totalRespondidas: { $sum: 1 },
+          totalAcertos: { $sum: { $cond: [{ $eq: ["$acertou", true] }, 1, 0] } },
+          totalErros: { $sum: { $cond: [{ $eq: ["$acertou", false] }, 1, 0] } },
+      }},
+      { $project: {
+          assunto: "$_id",
+          totalRespondidas: 1,
+          totalAcertos: 1,
+          totalErros: 1,
+          percentual: { $multiply: [{ $divide: ["$totalAcertos", "$totalRespondidas"] }, 100] },
+      }},
+      { $sort: { percentual: -1 } }  // Ordena os assuntos pelo percentual de acertos
+    ]);
 
-    res.status(201).json({ mensagem: 'Resposta salva com sucesso.' });
+    // Verificando se o desempenho foi encontrado
+    if (!desempenho || desempenho.length === 0) {
+      return res.status(404).json({ erro: 'Desempenho não encontrado para este usuário.' });
+    }
+
+    // Calcular o melhor e pior desempenho
+    const melhorDesempenho = desempenho[0];  // O primeiro será o melhor desempenho
+    const piorDesempenho = desempenho[desempenho.length - 1];  // O último será o pior desempenho
+
+    // Calcular a média diária (baseado no total de acertos e erros)
+    const totalRespondidas = desempenho.reduce((acc, item) => acc + item.totalRespondidas, 0);
+    const totalAcertos = desempenho.reduce((acc, item) => acc + item.totalAcertos, 0);
+    const totalErros = desempenho.reduce((acc, item) => acc + item.totalErros, 0);
+    const mediaPorDia = totalRespondidas > 0 ? totalRespondidas / 30 : 0;  // Supondo 30 dias de atividade
+
+    // Enviando a resposta com o desempenho completo
+    res.status(200).json({
+      melhorDesempenho,
+      piorDesempenho,
+      totalRespondidas,
+      totalAcertos,
+      totalErros,
+      mediaPorDia
+    });
 
   } catch (error) {
-    console.error('Erro ao salvar resposta:', error);
-    res.status(500).json({ erro: 'Erro interno ao salvar a resposta.' });
+    console.error('Erro ao carregar o desempenho:', error);
+    res.status(500).json({ erro: 'Erro interno ao carregar o desempenho.' });
   }
 });
 
