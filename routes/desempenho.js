@@ -2,7 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import autenticarToken from '../middleware/authid.js';
 import Desempenho from '../models/desempenhos.js';
-import Usuario from '../models/usuario.js'; // Adicionei a importação do modelo de usuário
+import Usuario from '../models/usuario.js';
 
 const router = express.Router();
 
@@ -22,9 +22,12 @@ router.get('/', autenticarToken, async (req, res) => {
       return res.status(404).json({ erro: 'Usuário não encontrado.' });
     }
 
+    // Convertendo o usuarioId para ObjectId corretamente
+    const usuarioObjectId = new mongoose.Types.ObjectId(usuarioId);
+
     // Agregando os dados para calcular o desempenho
     const desempenho = await Desempenho.aggregate([
-      { $match: { usuarioId: mongoose.Types.ObjectId(usuarioId) } }, // Filtra pelo usuário
+      { $match: { usuarioId: usuarioObjectId } }, // Usando o objeto ObjectId correto
       { $group: { 
           _id: "$assunto",
           totalRespondidas: { $sum: 1 },
@@ -33,17 +36,31 @@ router.get('/', autenticarToken, async (req, res) => {
       }},
       { $project: {
           assunto: "$_id",
+          _id: 0, // Remove o campo _id duplicado
           totalRespondidas: 1,
           totalAcertos: 1,
           totalErros: 1,
-          percentual: { $multiply: [{ $divide: ["$totalAcertos", "$totalRespondidas"] }, 100] },
+          percentual: { 
+            $cond: [
+              { $eq: ["$totalRespondidas", 0] }, 
+              0, 
+              { $multiply: [{ $divide: ["$totalAcertos", "$totalRespondidas"] }, 100] }
+            ]
+          },
       }},
       { $sort: { percentual: -1 } }  // Ordena os assuntos pelo percentual de acertos
     ]);
 
-    // Verificando se o desempenho foi encontrado
+    // Se não há desempenho registrado, retornar dados vazios mas não erro
     if (!desempenho || desempenho.length === 0) {
-      return res.status(404).json({ erro: 'Desempenho não encontrado para este usuário.' });
+      return res.status(200).json({
+        melhorDesempenho: null,
+        piorDesempenho: null,
+        totalRespondidas: 0,
+        totalAcertos: 0,
+        totalErros: 0,
+        mediaPorDia: 0
+      });
     }
 
     // Calcular o melhor e pior desempenho
@@ -54,7 +71,31 @@ router.get('/', autenticarToken, async (req, res) => {
     const totalRespondidas = desempenho.reduce((acc, item) => acc + item.totalRespondidas, 0);
     const totalAcertos = desempenho.reduce((acc, item) => acc + item.totalAcertos, 0);
     const totalErros = desempenho.reduce((acc, item) => acc + item.totalErros, 0);
-    const mediaPorDia = totalRespondidas > 0 ? totalRespondidas / 30 : 0;  // Supondo 30 dias de atividade
+    
+    // Calcular a média diária com base na data mais antiga e mais recente
+    let mediaPorDia = 0;
+    
+    // Obter a data mais antiga e mais recente para cálculo mais preciso da média
+    const registros = await Desempenho.find({ usuarioId: usuarioObjectId })
+      .sort({ data: 1 })
+      .limit(1);
+    
+    const registrosMaisRecentes = await Desempenho.find({ usuarioId: usuarioObjectId })
+      .sort({ data: -1 })
+      .limit(1);
+      
+    if (registros.length > 0 && registrosMaisRecentes.length > 0) {
+      const dataMaisAntiga = new Date(registros[0].data);
+      const dataMaisRecente = new Date(registrosMaisRecentes[0].data);
+      
+      // Diferença em milissegundos convertida para dias
+      const diferencaDias = Math.max(1, Math.ceil((dataMaisRecente - dataMaisAntiga) / (1000 * 60 * 60 * 24)));
+      
+      mediaPorDia = totalRespondidas / diferencaDias;
+    } else if (totalRespondidas > 0) {
+      // Fallback: se não conseguir calcular pelas datas, usa um valor padrão
+      mediaPorDia = totalRespondidas / 1; // Assumindo que é tudo do mesmo dia
+    }
 
     // Enviando a resposta com o desempenho completo
     res.status(200).json({
@@ -72,7 +113,6 @@ router.get('/', autenticarToken, async (req, res) => {
   }
 });
 
- // Exemplo de rota POST que salva desempenho do usuário
 // Exemplo de rota POST que salva desempenho do usuário
 router.post('/salvar', autenticarToken, async (req, res) => {
   const usuarioId = req.usuarioId; // Extraído do token pelo middleware
@@ -99,6 +139,5 @@ router.post('/salvar', autenticarToken, async (req, res) => {
     res.status(500).json({ erro: 'Erro interno ao salvar desempenho.' });
   }
 });
-
 
 export default router;
