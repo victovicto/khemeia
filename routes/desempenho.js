@@ -72,4 +72,33 @@ router.get('/', autenticarToken, async (req, res) => {
   }
 });
 
+ // Exemplo de rota POST que salva desempenho do usuário
+router.post('/salvar', autenticarToken, async (req, res) => {
+  const usuarioId = req.usuarioId;
+  const { assunto, acertou, pergunta, resposta } = req.body;
+
+  if (!assunto || typeof acertou !== 'boolean') {
+    return res.status(400).json({ erro: 'Dados incompletos.' });
+  }
+
+  try {
+    const novoDesempenho = new Desempenho({
+      usuarioId,
+      assunto,
+      acertou,
+      pergunta,
+      resposta,
+      data: new Date()
+    });
+
+    await novoDesempenho.save();
+
+    res.status(201).json({ mensagem: 'Desempenho salvo com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao salvar desempenho:', error);
+    res.status(500).json({ erro: 'Erro interno ao salvar desempenho.' });
+  }
+});
+
+
 export default router;
