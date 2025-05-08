@@ -73,8 +73,9 @@ router.get('/', autenticarToken, async (req, res) => {
 });
 
  // Exemplo de rota POST que salva desempenho do usuário
+// Exemplo de rota POST que salva desempenho do usuário
 router.post('/salvar', autenticarToken, async (req, res) => {
-  const usuarioId = req.usuarioId;
+  const usuarioId = req.usuarioId; // Extraído do token pelo middleware
   const { assunto, acertou, pergunta, resposta } = req.body;
 
   if (!assunto || typeof acertou !== 'boolean') {
@@ -84,10 +85,9 @@ router.post('/salvar', autenticarToken, async (req, res) => {
   try {
     const novoDesempenho = new Desempenho({
       usuarioId,
+      questaoId: new mongoose.Types.ObjectId(), // Gera um novo ID para a questão
       assunto,
       acertou,
-      pergunta,
-      resposta,
       data: new Date()
     });
 
