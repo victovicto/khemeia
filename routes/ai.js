@@ -1,6 +1,6 @@
 import express from 'express'; 
 import togetherAPI from '../config/together.js';
-import cors from 'cors'; // Certifique-se de importar o módulo cors
+import cors from 'cors';
 
 const router = express.Router();
 
@@ -28,7 +28,7 @@ router.use(cors({
   allowedHeaders: ['Content-Type', 'Accept', 'Origin', 'X-Requested-With']
 }));
 
-// Endpoint: Curiosidade + aplicação do composto
+// Endpoint: Curiosidade + aplicação do composto - PROMPT MELHORADO
 router.post('/composto', async (req, res) => {
   const { nome } = req.body;
 
@@ -38,7 +38,76 @@ router.post('/composto', async (req, res) => {
 
   console.log(`Recebido nome para curiosidade: ${nome}`);
 
-  const prompt = `Me fale uma curiosidade interessante para estudantes do ensino médio e uma aplicação cotidiana do composto químico chamado "${nome}". Responda em português.`;
+  // Prompt melhorado para gerar uma resposta mais natural
+  const prompt = `Para o composto químico "${nome}", escreva um parágrafo breve e interessante que:
+1. Contenha uma curiosidade fascinante sobre o composto
+2. Mencione uma aplicação comum ou importante na vida cotidiana
+3. Se possível, adicione um fato surpreendente ou pouco conhecido
+
+Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.`;
+
+  try {
+    const response = await togetherAPI.post('', {
+      model: "mistralai/Mistral-7B-Instruct-v0.1",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+      max_tokens: 300
+    });
+
+    const resultado = response.data.choices?.[0]?.message?.content || "Resposta não encontrada.";
+    res.json({ resposta: resultado });
+  } catch (err) {
+    console.error('Erro na requisição Together AI:', err.response?.data || err.message);
+    res.status(500).json({ erro: 'Falha ao gerar resposta da IA', detalhes: err.message });
+  }
+});
+
+// Endpoint para obter curiosidade para o editor de moléculas
+router.post('/curiosidade-molecula', async (req, res) => {
+  const { molfile, smiles, nome } = req.body;
+  
+  // Priorizar o uso de nome se disponível, depois molfile, depois smiles
+  let identificador = nome || '';
+  let tipo = 'nome';
+  
+  if (!identificador && molfile) {
+    identificador = molfile;
+    tipo = 'molfile';
+  } else if (!identificador && smiles) {
+    identificador = smiles;
+    tipo = 'smiles';
+  }
+
+  if (!identificador) {
+    return res.status(400).json({ erro: 'Dados da molécula não fornecidos.' });
+  }
+
+  console.log(`Gerando curiosidade para molécula (${tipo}).`);
+
+  // Ajustar o prompt dependendo do tipo de entrada
+  let prompt;
+  if (tipo === 'nome') {
+    prompt = `Para o composto químico "${identificador}", escreva um parágrafo breve e interessante que:
+1. Contenha uma curiosidade fascinante sobre o composto
+2. Mencione uma aplicação comum ou importante na vida cotidiana
+3. Se possível, adicione um fato surpreendente ou pouco conhecido
+
+Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.`;
+  } else {
+    // Para molfile ou smiles
+    prompt = `Analise a seguinte representação química (${tipo}):
+
+\`\`\`
+${identificador}
+\`\`\`
+
+Com base nessa estrutura molecular, escreva um parágrafo breve e interessante que:
+1. Identifique o composto (se possível)
+2. Contenha uma curiosidade fascinante sobre ele
+3. Mencione uma aplicação comum ou importante na vida cotidiana
+
+Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.`;
+  }
 
   try {
     const response = await togetherAPI.post('', {
