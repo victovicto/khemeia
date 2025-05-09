@@ -82,7 +82,7 @@ router.post('/curiosidade-molecula', async (req, res) => {
     return res.status(400).json({ erro: 'Dados da molécula não fornecidos.' });
   }
 
-  console.log(`Gerando curiosidade para molécula (${tipo}).`);
+  console.log(`Gerando curiosidade para molécula (${tipo}): ${identificador.substring(0, 30)}...`);
 
   // Ajustar o prompt dependendo do tipo de entrada
   let prompt;
