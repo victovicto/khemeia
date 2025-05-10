@@ -10,23 +10,46 @@ router.use(cors({
     // Permitir requisições sem origem (como Postman, curl, etc)
     if (!origin) return callback(null, true);
     
-    // Lista de origens permitidas
+    // Lista de origens permitidas (expandida)
     const allowedOrigins = [
+      'http://localhost:3000',
       'http://localhost:3001',
+      'http://localhost:5000',
       'http://localhost:5500',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+      'http://127.0.0.1:5000',
       'http://127.0.0.1:5500',
-      'https://khemeia.onrender.com'
+      'https://khemeia.onrender.com',
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+    console.log('Origem da requisição:', origin);
+    
+    // Em desenvolvimento, aceitar todas as origens
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // Em produção, verificar se a origem está na lista permitida
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Não permitido pelo CORS'));
+      // Caso seja uma origem não listada, mas que inclua o domínio render.com
+      if (origin && (origin.includes('render.com') || origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+        console.log('Permitindo requisição de origem não listada mas confiável:', origin);
+        callback(null, true);
+      } else {
+        console.error('Origem bloqueada pelo CORS:', origin);
+        callback(new Error('Não permitido pelo CORS'));
+      }
     }
   },
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept', 'Origin', 'X-Requested-With']
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Accept', 'Origin', 'X-Requested-With', 'Authorization'],
+  credentials: true
 }));
+
+// Resto do seu código continua igual...
 
 // Endpoint: Curiosidade + aplicação do composto - PROMPT MELHORADO
 router.post('/composto', async (req, res) => {
