@@ -12,15 +12,9 @@ router.use(cors({
     
     // Lista de origens permitidas (expandida)
     const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:5000',
-      'http://localhost:5500',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      'http://127.0.0.1:5000',
-      'http://127.0.0.1:5500',
       'https://khemeia.onrender.com',
+      'http://localhost:3001',
+      'http://127.0.0.1:3001',
     ];
     
     console.log('Origem da requisição:', origin);
