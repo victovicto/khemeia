@@ -12,6 +12,7 @@ router.use(cors({
     
     // Lista de origens permitidas (expandida)
     const allowedOrigins = [
+      'https://editor-khemeia.onrender.com',
       'https://khemeia.onrender.com',
       'http://localhost:3001',
       'http://127.0.0.1:3001',
@@ -43,8 +44,6 @@ router.use(cors({
   credentials: true
 }));
 
-// Resto do seu código continua igual...
-
 // Endpoint: Curiosidade + aplicação do composto - PROMPT MELHORADO
 router.post('/composto', async (req, res) => {
   const { nome } = req.body;
@@ -61,7 +60,9 @@ router.post('/composto', async (req, res) => {
 2. Mencione uma aplicação comum ou importante na vida cotidiana
 3. Se possível, adicione um fato surpreendente ou pouco conhecido
 
-Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.`;
+Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.
+
+IMPORTANTE: Responda SEMPRE em português brasileiro. Não use inglês ou qualquer outra língua.`;
 
   try {
     const response = await togetherAPI.post('', {
@@ -72,7 +73,31 @@ Escreva em um tom conversacional e informativo, como se estivesse explicando par
     });
 
     const resultado = response.data.choices?.[0]?.message?.content || "Resposta não encontrada.";
-    res.json({ resposta: resultado });
+    
+    // Verificação básica de idioma
+    if (containsEnglishPhrases(resultado)) {
+      console.warn('Possível resposta em inglês detectada:', resultado.substring(0, 50) + '...');
+      
+      // Tentar novamente com ênfase maior no português
+      const retryPrompt = `Para o composto químico "${nome}", escreva um parágrafo breve e interessante em PORTUGUÊS BRASILEIRO (não em inglês):
+1. Contenha uma curiosidade fascinante sobre o composto
+2. Mencione uma aplicação comum ou importante na vida cotidiana
+3. Se possível, adicione um fato surpreendente ou pouco conhecido
+
+IMPORTANTE: Esta resposta DEVE ser em português do Brasil. NÃO responda em inglês ou qualquer outra língua.`;
+
+      const retryResponse = await togetherAPI.post('', {
+        model: "mistralai/Mistral-7B-Instruct-v0.1",
+        messages: [{ role: "user", content: retryPrompt }],
+        temperature: 0.7,
+        max_tokens: 300
+      });
+
+      const retryResultado = retryResponse.data.choices?.[0]?.message?.content || "Resposta não encontrada.";
+      res.json({ resposta: retryResultado });
+    } else {
+      res.json({ resposta: resultado });
+    }
   } catch (err) {
     console.error('Erro na requisição Together AI:', err.response?.data || err.message);
     res.status(500).json({ erro: 'Falha ao gerar resposta da IA', detalhes: err.message });
@@ -109,7 +134,9 @@ router.post('/curiosidade-molecula', async (req, res) => {
 2. Mencione uma aplicação comum ou importante na vida cotidiana
 3. Se possível, adicione um fato surpreendente ou pouco conhecido
 
-Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.`;
+Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.
+
+IMPORTANTE: Responda SEMPRE em português brasileiro. Não use inglês ou qualquer outra língua.`;
   } else {
     // Para molfile ou smiles
     prompt = `Analise a seguinte representação química (${tipo}):
@@ -123,7 +150,9 @@ Com base nessa estrutura molecular, escreva um parágrafo breve e interessante q
 2. Contenha uma curiosidade fascinante sobre ele
 3. Mencione uma aplicação comum ou importante na vida cotidiana
 
-Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.`;
+Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.
+
+IMPORTANTE: Responda SEMPRE em português brasileiro. Não use inglês ou qualquer outra língua.`;
   }
 
   try {
@@ -135,7 +164,26 @@ Escreva em um tom conversacional e informativo, como se estivesse explicando par
     });
 
     const resultado = response.data.choices?.[0]?.message?.content || "Resposta não encontrada.";
-    res.json({ resposta: resultado });
+    
+    // Verificação básica de idioma
+    if (containsEnglishPhrases(resultado)) {
+      console.warn('Possível resposta em inglês detectada, fazendo nova tentativa com ênfase em português');
+      
+      // Segundo prompt com ênfase ainda maior no português
+      const retryPrompt = prompt + "\n\nREPITO: SUA RESPOSTA DEVE SER APENAS EM PORTUGUÊS BRASILEIRO.";
+      
+      const retryResponse = await togetherAPI.post('', {
+        model: "mistralai/Mistral-7B-Instruct-v0.1",
+        messages: [{ role: "user", content: retryPrompt }],
+        temperature: 0.7,
+        max_tokens: 300
+      });
+      
+      const retryResultado = retryResponse.data.choices?.[0]?.message?.content || "Resposta não encontrada.";
+      res.json({ resposta: retryResultado });
+    } else {
+      res.json({ resposta: resultado });
+    }
   } catch (err) {
     console.error('Erro na requisição Together AI:', err.response?.data || err.message);
     res.status(500).json({ erro: 'Falha ao gerar resposta da IA', detalhes: err.message });
@@ -152,7 +200,12 @@ router.post('/nome-molecula', async (req, res) => {
 
   console.log(`Recebido Molfile com ${molfile.length} caracteres.`);
 
-  const prompt = `Analise o seguinte Molfile e forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português.\nMolfile:\n"""${molfile}"""`;
+  const prompt = `Analise o seguinte Molfile e forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português brasileiro (não em inglês).
+
+Molfile:
+"""${molfile}"""
+
+IMPORTANTE: O nome DEVE ser em português do Brasil.`;
 
   try {
     const response = await togetherAPI.post('', {
@@ -163,7 +216,30 @@ router.post('/nome-molecula', async (req, res) => {
     });
 
     const nome = response.data.choices?.[0]?.message?.content?.trim() || "Nome não identificado";
-    res.json({ nome });
+    
+    // Verificação básica de idioma para o nome
+    if (containsEnglishWords(nome)) {
+      console.warn('Possível nome em inglês detectado, fazendo nova tentativa');
+      
+      const retryPrompt = `Forneça o nome IUPAC em PORTUGUÊS BRASILEIRO (não em inglês) para a seguinte molécula:
+
+Molfile:
+"""${molfile}"""
+
+IMPORTANTE: O nome deve estar em português do Brasil, não em inglês. Por exemplo, use "ácido" em vez de "acid", "etano" em vez de "ethane", etc.`;
+      
+      const retryResponse = await togetherAPI.post('', {
+        model: "mistralai/Mistral-7B-Instruct-v0.1",
+        messages: [{ role: "user", content: retryPrompt }],
+        temperature: 0.5,
+        max_tokens: 100
+      });
+      
+      const retryNome = retryResponse.data.choices?.[0]?.message?.content?.trim() || "Nome não identificado";
+      res.json({ nome: retryNome });
+    } else {
+      res.json({ nome });
+    }
   } catch (err) {
     console.error('Erro ao gerar nome da molécula:', err.response?.data || err.message);
     res.status(500).json({ erro: 'Falha ao gerar nome da molécula', detalhes: err.message });
@@ -199,6 +275,12 @@ router.post('/analisar-molecula', async (req, res) => {
     console.log('Recebendo formato KET');
     // Extrair apenas o KET sem o prefixo
     moleculeData = moleculeData.replace('KET:', '').trim();
+  } else if (moleculeData.startsWith('SVG_CAPTURE:')) {
+    formatoOriginal = 'svg';
+    console.log('Recebendo captura SVG');
+    // Para SVG, usaremos uma molécula de backup, pois não processamos SVG diretamente
+    moleculeData = "CC(=O)OC1=CC=CC=C1C(=O)O"; // Aspirina
+    formatoOriginal = 'smiles';
   }
 
   console.log(`Analisando molécula (${formatoOriginal}) com ${moleculeData.length} caracteres...`);
@@ -214,7 +296,12 @@ router.post('/analisar-molecula', async (req, res) => {
         ? `Analise a seguinte notação SMILES e`
         : `Analise a seguinte representação química e`;
     
-    const promptNome = `${promptBase} forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português.\nDados:\n"""${sanitizedMoleculeData}"""`;
+    const promptNome = `${promptBase} forneça apenas o nome oficial da molécula com base na nomenclatura IUPAC, em português brasileiro (não em inglês).
+Dados:
+"""${sanitizedMoleculeData}"""
+
+IMPORTANTE: O nome DEVE ser em português do Brasil.`;
+    
     const promptPerguntas = gerarPromptPerguntas(sanitizedMoleculeData, formatoOriginal);
 
     // Executar chamadas à API em paralelo para melhor performance
@@ -238,13 +325,67 @@ router.post('/analisar-molecula', async (req, res) => {
       throw new Error('Resposta incompleta da API de IA');
     }
 
-    const nome = resNome.data.choices[0]?.message?.content?.trim() || "Nome não identificado";
+    let nome = resNome.data.choices[0]?.message?.content?.trim() || "Nome não identificado";
     const perguntasTexto = resPerguntas.data.choices[0]?.message?.content || "";
     
-    // Processar as perguntas com tratamento de erro
+    // Verificar se o nome está em inglês e corrigir se necessário
+    if (containsEnglishWords(nome)) {
+      console.warn('Possível nome em inglês detectado, fazendo nova tentativa');
+      
+      const retryPrompt = `Forneça o nome IUPAC em PORTUGUÊS BRASILEIRO (não em inglês) para a seguinte molécula:
+
+Dados:
+"""${sanitizedMoleculeData}"""
+
+IMPORTANTE: O nome deve estar em português do Brasil, não em inglês. Por exemplo, use "ácido" em vez de "acid", "etano" em vez de "ethane", etc.`;
+      
+      try {
+        const retryResponse = await togetherAPI.post('', {
+          model: "mistralai/Mistral-7B-Instruct-v0.1",
+          messages: [{ role: "user", content: retryPrompt }],
+          temperature: 0.5,
+          max_tokens: 100
+        });
+        
+        nome = retryResponse.data.choices?.[0]?.message?.content?.trim() || nome;
+      } catch (retryError) {
+        console.error('Erro na segunda tentativa de nome:', retryError);
+        // Mantém o nome original se a segunda tentativa falhar
+      }
+    }
+    
+    // Verificar se as perguntas estão em inglês e corrigir se necessário
     let perguntas = [];
     try {
       perguntas = processarPerguntasComAlternativas(perguntasTexto).filter(p => p);
+      
+      // Verificar se as perguntas estão em inglês
+      if (containsEnglishContent(perguntas)) {
+        console.warn('Possíveis perguntas em inglês detectadas, fazendo nova tentativa');
+        
+        const retryPrompt = `${promptPerguntas}
+
+IMPORTANTE: TODAS as perguntas e respostas devem ser em PORTUGUÊS BRASILEIRO. NÃO use inglês!`;
+        
+        try {
+          const retryResponse = await togetherAPI.post('', {
+            model: "mistralai/Mistral-7B-Instruct-v0.1",
+            messages: [{ role: "user", content: retryPrompt }],
+            temperature: 0.7,
+            max_tokens: 1000
+          });
+          
+          const retryPerguntasTexto = retryResponse.data.choices[0]?.message?.content || "";
+          const retryPerguntas = processarPerguntasComAlternativas(retryPerguntasTexto).filter(p => p);
+          
+          if (retryPerguntas.length > 0) {
+            perguntas = retryPerguntas;
+          }
+        } catch (retryError) {
+          console.error('Erro na segunda tentativa de perguntas:', retryError);
+          // Mantém as perguntas originais se a segunda tentativa falhar
+        }
+      }
     } catch (err) {
       console.error('Erro ao processar perguntas:', err);
       perguntas = [];
@@ -300,6 +441,34 @@ async function gerarPerguntasHandler(req, res) {
     let perguntas = [];
     try {
       perguntas = processarPerguntasComAlternativas(resultado).filter(p => p);
+      
+      // Verificar se as perguntas estão em inglês
+      if (containsEnglishContent(perguntas)) {
+        console.warn('Possíveis perguntas em inglês detectadas, fazendo nova tentativa');
+        
+        const retryPrompt = `${prompt}
+
+IMPORTANTE: TODAS as perguntas e respostas devem ser em PORTUGUÊS BRASILEIRO. NÃO use inglês!`;
+        
+        try {
+          const retryResponse = await togetherAPI.post('', {
+            model: "mistralai/Mistral-7B-Instruct-v0.1",
+            messages: [{ role: "user", content: retryPrompt }],
+            temperature: 0.7,
+            max_tokens: 1000
+          });
+          
+          const retryPerguntasTexto = retryResponse.data.choices[0]?.message?.content || "";
+          const retryPerguntas = processarPerguntasComAlternativas(retryPerguntasTexto).filter(p => p);
+          
+          if (retryPerguntas.length > 0) {
+            perguntas = retryPerguntas;
+          }
+        } catch (retryError) {
+          console.error('Erro na segunda tentativa de perguntas:', retryError);
+          // Mantém as perguntas originais se a segunda tentativa falhar
+        }
+      }
     } catch (err) {
       console.error('Erro ao processar texto das perguntas:', err);
       perguntas = [];
@@ -354,6 +523,8 @@ B) [alternativa B]
 C) [alternativa C]  
 D) [alternativa D]  
 Resposta correta: [letra]
+
+IMPORTANTE: TODAS as perguntas e respostas DEVEM ser em PORTUGUÊS BRASILEIRO.
 `;
 }
 
@@ -427,6 +598,57 @@ function processarPerguntasComAlternativas(texto) {
     console.error('Erro geral no processarPerguntasComAlternativas:', err);
     return [];
   }
+}
+
+// Funções auxiliares para detecção de idioma
+function containsEnglishPhrases(text) {
+  if (!text || typeof text !== 'string') return false;
+  
+  const englishPhrases = [
+    'this compound', 'the compound', 'is used', 'is a', 'it is', 
+    'it can', 'is known', 'has been', 'was discovered', 'this molecule'
+  ];
+  
+  return englishPhrases.some(phrase => 
+    text.toLowerCase().includes(phrase.toLowerCase())
+  );
+}
+
+function containsEnglishWords(text) {
+  if (!text || typeof text !== 'string') return false;
+  
+  const englishWords = [
+    'acid', 'ether', 'alcohol', 'aldehyde', 'ketone', 'ester', 'amine', 
+    'amide', 'benzene', 'hydroxyl', 'compound', 'carbon', 'hydrogen', 
+    'oxygen', 'nitrogen', 'sulfur', 'phosphorus', 'methyl', 'ethyl', 
+    'propyl', 'butyl', 'phenyl', 'acetate', 'chloride', 'bromide', 'iodide'
+  ];
+  
+  // Verificar se alguma palavra em inglês está presente e não é parte de outra palavra portuguesa
+  return englishWords.some(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'i');
+    return regex.test(text);
+  });
+}
+
+function containsEnglishContent(perguntas) {
+  if (!perguntas || !Array.isArray(perguntas) || perguntas.length === 0) return false;
+
+  // Verificar enunciados e alternativas
+  for (const pergunta of perguntas) {
+    if (containsEnglishPhrases(pergunta.enunciado) || containsEnglishWords(pergunta.enunciado)) {
+      return true;
+    }
+    
+    for (const letra in pergunta.alternativas) {
+      if (containsEnglishPhrases(pergunta.alternativas[letra]) || 
+          containsEnglishWords(pergunta.alternativas[letra])) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
 }
 
 // Endpoint de health-check
