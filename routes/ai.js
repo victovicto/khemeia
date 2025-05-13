@@ -12,7 +12,7 @@ router.use(cors({
     
     // Lista de origens permitidas (expandida)
     const allowedOrigins = [
-      'https://editor-khemeia.onrender.com',
+      'https://khemeia-osra.onrender.com',
       'https://khemeia.onrender.com',
       'http://localhost:3001',
       'http://127.0.0.1:3001',
