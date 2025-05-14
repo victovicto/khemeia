@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import moleculeRoutes from './routes/molecule.js';
 import quizRoutes from './routes/quiz.js';
 import desempenhoRoutes from './routes/desempenho.js';
+import assuntoRoutes from './routes/assunto.js'; // Nova importação
 import aiRoute from './routes/ai.js';
 
 dotenv.config();
@@ -45,6 +46,7 @@ app.use('/auth', authRoutes);
 app.use('/molecule', moleculeRoutes);
 app.use('/quiz', quizRoutes);
 app.use('/desempenho', desempenhoRoutes);
+app.use('/assunto', assuntoRoutes); // Nova rota
 app.use('/ai', aiRoute);
 
 // Log de carregamento das rotas
