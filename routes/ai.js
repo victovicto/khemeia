@@ -110,72 +110,23 @@ router.post('/curiosidade-molecula', async (req, res) => {
   }
 });
 
-// Função para gerar curiosidade da molécula
-async function gerarCuriosidade(nomeComposto) {
-  const prompt = `Para o composto químico "${nomeComposto}", escreva um parágrafo breve e interessante que:
-1. Contenha uma curiosidade fascinante sobre o composto
-2. Mencione uma aplicação comum ou importante na vida cotidiana
-3. Se possível, adicione um fato surpreendente ou pouco conhecido
-
-Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções como "Aqui está uma curiosidade" ou estruturas de pergunta e resposta. Mantenha o texto fluido e natural, sem exceder 4-5 frases.
-
-IMPORTANTE: Responda SEMPRE em português brasileiro. Não use inglês ou qualquer outra língua.`;
-
-  try {
-    const response = await togetherAPI.post('', {
-      model: "mistralai/Mistral-7B-Instruct-v0.1",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 300
-    });
-
-    let resultado = response.data.choices?.[0]?.message?.content || "Resposta não encontrada.";
-    
-    // Verificação básica de idioma e correção se necessário
-    if (containsEnglishPhrases(resultado)) {
-      console.warn('Resposta em inglês detectada, fazendo nova tentativa...');
-      
-      const retryPrompt = `Para o composto químico "${nomeComposto}", escreva um parágrafo breve e interessante em PORTUGUÊS BRASILEIRO (não em inglês):
-1. Contenha uma curiosidade fascinante sobre o composto
-2. Mencione uma aplicação comum na vida cotidiana
-3. Adicione um fato surpreendente
-
-IMPORTANTE: Esta resposta DEVE ser em português do Brasil. NÃO responda em inglês.`;
-
-      const retryResponse = await togetherAPI.post('', {
-        model: "mistralai/Mistral-7B-Instruct-v0.1",
-        messages: [{ role: "user", content: retryPrompt }],
-        temperature: 0.7,
-        max_tokens: 300
-      });
-
-      resultado = retryResponse.data.choices?.[0]?.message?.content || resultado;
-    }
-
-    return resultado;
-  } catch (error) {
-    console.error('Erro na API Together AI (curiosidade):', error);
-    throw new Error('Falha ao gerar curiosidade: ' + error.message);
-  }
-}
-
 // Função para gerar quiz da molécula
 async function gerarQuiz(nomeComposto) {
-  const prompt = `Para o composto químico "${nomeComposto}", gere 5 perguntas de múltipla escolha voltadas para o ensino médio.
+  const prompt = `Considere o composto químico "${nomeComposto}". Com base nas características estruturais e propriedades dessa molécula, crie 5 perguntas de múltipla escolha voltadas para estudantes brasileiros do ensino médio, contextualizadas e interessantes.
 
 Cada pergunta deve conter:
-- Enunciado claro
-- Quatro alternativas (A, B, C, D)
-- Indicação da resposta correta
+- Um enunciado claro e pedagógico, preferencialmente contextualizado com situações reais do cotidiano (ex: alimentos, medicamentos, cosméticos, combustíveis).
+- Quatro alternativas (A, B, C, D), com apenas uma correta.
+- A indicação da **resposta correta**, seguindo o formato: "Resposta correta: [letra]".
 
-As perguntas devem abordar:
-- Grupos funcionais presentes
-- Propriedades físico-químicas
-- Nome IUPAC (em português)
-- Aplicações práticas
-- Reações típicas
+Os temas das perguntas devem abranger:
+1. Identificação dos grupos funcionais presentes na molécula (funções orgânicas como álcoois, éteres, ácidos, etc.)
+2. Tipo de ligações químicas predominantes (iônicas, covalentes, polares ou apolares)
+3. Nomenclatura brasileira segundo a IUPAC (em português)
+4. Aplicações práticas do composto na vida cotidiana
+5. Reações químicas típicas envolvendo a molécula
 
-Formato EXATO:
+Formato EXATO da resposta:
 Pergunta 1: [enunciado]  
 A) [alternativa A]  
 B) [alternativa B]  
@@ -183,7 +134,11 @@ C) [alternativa C]
 D) [alternativa D]  
 Resposta correta: [letra]
 
-IMPORTANTE: TODAS as perguntas e respostas DEVEM ser em PORTUGUÊS BRASILEIRO.`;
+IMPORTANTE:
+- As perguntas e respostas devem estar em **português brasileiro**.
+- Use linguagem adequada para estudantes do ensino médio.
+- Evite termos técnicos excessivos sem explicação.
+- As perguntas devem ser relevantes, instigantes e bem estruturadas.`;
 
   try {
     const response = await togetherAPI.post('', {
@@ -194,14 +149,11 @@ IMPORTANTE: TODAS as perguntas e respostas DEVEM ser em PORTUGUÊS BRASILEIRO.`;
     });
 
     let perguntasTexto = response.data.choices?.[0]?.message?.content || "";
-    
-    // Verificar se as perguntas estão em inglês
+
     if (containsEnglishPhrases(perguntasTexto)) {
       console.warn('Perguntas em inglês detectadas, fazendo nova tentativa...');
       
-      const retryPrompt = `${prompt}
-
-REPITO: TODAS as perguntas e respostas devem ser em PORTUGUÊS BRASILEIRO. NÃO use inglês!`;
+      const retryPrompt = prompt + `\n\nREPITO: TODAS as perguntas e respostas devem ser em PORTUGUÊS BRASILEIRO. NÃO use inglês!`;
       
       const retryResponse = await togetherAPI.post('', {
         model: "mistralai/Mistral-7B-Instruct-v0.1",
@@ -209,10 +161,10 @@ REPITO: TODAS as perguntas e respostas devem ser em PORTUGUÊS BRASILEIRO. NÃO 
         temperature: 0.7,
         max_tokens: 1000
       });
-      
+
       perguntasTexto = retryResponse.data.choices?.[0]?.message?.content || perguntasTexto;
     }
-    
+
     return processarPerguntas(perguntasTexto);
   } catch (error) {
     console.error('Erro na API Together AI (quiz):', error);
