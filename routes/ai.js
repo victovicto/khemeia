@@ -170,12 +170,12 @@ Contextos brasileiros (agricultura, indústria, cotidiano)
 Apenas português - sem anglicismos ou termos estrangeiros
 Alternativas únicas e plausíveis com uma resposta correta
 
-Estrutura das 5 Questões( APENAS DO TEMA, AS QUESTÕES PRECISAM SER CONTEXTUALIZADAS )
-Q1 - Nomenclatura: Nome IUPAC brasileiro, classificação, fórmula
-Q2 - Estrutura: Grupos funcionais, ligações químicas, polaridade
-Q3 - Propriedades: Solubilidade, pontos de fusão/ebulição, forças intermoleculares
-Q4 - Aplicações: Usos industriais, medicinais, cotidianos no Brasil
-Q5 - Reações: Transformações químicas típicas, produtos de reação
+Tema das 5 Questões( APENAS DO TEMA, AS QUESTÕES PRECISAM SER CONTEXTUALIZADAS ):
+Nomenclatura: Nome IUPAC brasileiro, classificação, fórmula
+Estrutura: Grupos funcionais, ligações químicas, polaridade
+Propriedades: Solubilidade, pontos de fusão/ebulição, forças intermoleculares
+Aplicações: Usos industriais, medicinais, cotidianos no Brasil
+Reações: Transformações químicas típicas, produtos de reação
 Formato de Resposta
 Nome em português: [tradução IUPAC]
 
