@@ -161,33 +161,81 @@ IMPORTANTE: Esta resposta DEVE ser em português do Brasil. NÃO responda em ing
 
 // Função para gerar quiz da molécula
 async function gerarQuiz(nomeComposto) {
-  const prompt = `Considere o composto químico "${nomeComposto}". Com base nas características estruturais e propriedades dessa molécula, crie 5 perguntas de múltipla escolha voltadas para estudantes brasileiros do ensino médio, contextualizadas e interessantes.
+  const prompt = `Considere o composto químico "${nomeComposto}". Primeiro, traduza o nome do composto para o português brasileiro usando a nomenclatura IUPAC oficial brasileira. Em seguida, com base nas características estruturais e propriedades dessa substância, crie 5 perguntas de múltipla escolha voltadas para estudantes brasileiros do ensino médio.
+Instruções Gerais:
 
-Cada pergunta deve conter:
-- Um enunciado claro e pedagógico, preferencialmente contextualizado com situações reais do cotidiano (ex: alimentos, medicamentos, cosméticos, combustíveis).
-- Quatro alternativas (A, B, C, D), com apenas uma correta.
-- A indicação da **resposta correta**, seguindo o formato: "Resposta correta: [letra]".
+OBRIGATÓRIO: Traduza completamente o nome do composto para português brasileiro
+Use exclusivamente a nomenclatura IUPAC brasileira oficial
+Não utilize nenhuma palavra em inglês nas perguntas ou alternativas
+Considere TODOS os tipos de compostos: orgânicos, inorgânicos, sais, ácidos, bases, óxidos, etc.
+Adeque a linguagem para estudantes do ensino médio (14-17 anos)
+Contextualize as perguntas com situações do cotidiano brasileiro
 
-Os temas das perguntas devem abranger:
-1. Identificação dos grupos funcionais presentes na molécula (funções orgânicas como álcoois, éteres, ácidos, etc.)
-2. Tipo de ligações químicas predominantes (iônicas, covalentes, polares ou apolares)
-3. Nomenclatura brasileira segundo a IUPAC (em português)
-4. Aplicações práticas do composto na vida cotidiana
-5. Reações químicas típicas envolvendo a molécula
+Estrutura de cada pergunta:
+
+Enunciado: Claro, pedagógico e contextualizado com situações reais (alimentos, medicamentos, produtos de limpeza, combustíveis, cosméticos, agricultura, indústria brasileira)
+Quatro alternativas (A, B, C, D) com conteúdo único e sem repetições
+Uma única resposta correta
+Indicação da resposta: "Resposta correta: [letra]"
+
+Temas obrigatórios das 5 perguntas:
+Pergunta 1: Nomenclatura e Classificação
+
+Nome oficial brasileiro segundo IUPAC
+Classificação do composto (orgânico/inorgânico, tipo de sal, classe funcional)
+Fórmula molecular ou estrutural
+
+Pergunta 2: Grupos Funcionais e Estrutura
+
+Identificação de grupos funcionais (para compostos orgânicos)
+Tipos de ligações químicas (iônicas, covalentes, metálicas)
+Polaridade e geometria molecular
+
+Pergunta 3: Propriedades Físico-Químicas
+
+Solubilidade, ponto de fusão/ebulição, condutividade
+Comportamento ácido-base (se aplicável)
+Estados físicos e forças intermoleculares
+
+Pergunta 4: Aplicações e Importância
+
+Usos na indústria, medicina, agricultura, cotidiano
+Relevância para a economia ou sociedade brasileira
+Produtos comerciais que contêm o composto
+
+Pergunta 5: Reações Químicas e Transformações
+
+Reações típicas do composto
+Produtos de reação importantes
+Mecanismos de reação (nível médio)
 
 Formato EXATO da resposta:
-Pergunta 1: [enunciado]  
-A) [alternativa A]  
-B) [alternativa B]  
-C) [alternativa C]  
-D) [alternativa D]  
+Nome do composto em português brasileiro: [tradução completa]
+Pergunta 1: [enunciado contextualizado]
+A) [alternativa única]
+B) [alternativa única]
+C) [alternativa única]
+D) [alternativa única]
 Resposta correta: [letra]
+[Repetir formato para as 5 perguntas]
+Requisitos específicos:
 
-IMPORTANTE:
-- As perguntas e respostas devem estar em **português brasileiro**.
-- Use linguagem adequada para estudantes do ensino médio.
-- Evite termos técnicos excessivos sem explicação.
-- As perguntas devem ser relevantes, instigantes e bem estruturadas.
+Linguagem simples mas precisa cientificamente
+Evite anglicismos e termos técnicos sem explicação
+Contextos brasileiros (produtos nacionais, situações locais)
+Alternativas plausíveis mas com apenas uma correta
+Perguntas instigantes que estimulem o raciocínio
+Cada alternativa deve ser substancialmente diferente das outras
+Use exemplos concretos e práticos do dia a dia
+
+Exemplos de contextos brasileiros:
+
+Agricultura (fertilizantes, agrotóxicos, nutrição de plantas)
+Indústria alimentícia (conservantes, aditivos, fermentação)
+Petroquímica (combustíveis, plásticos, borracha)
+Medicamentos (princípios ativos, farmacologia)
+Meio ambiente (poluição, tratamento de água, reciclagem)
+Produtos de limpeza e higiene pessoal
 `;
 
   try {
