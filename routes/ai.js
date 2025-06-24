@@ -162,33 +162,36 @@ IMPORTANTE: Esta resposta DEVE ser em português do Brasil. NÃO responda em ing
 // Função para gerar quiz da molécula
 async function gerarQuiz(nomeComposto) {
   const prompt = `Analise o composto "${nomeComposto}" e crie 5 questões de múltipla escolha para estudantes brasileiros do ensino médio, seguindo estas diretrizes:
-Requisitos Essenciais
 
-Traduza o nome para português brasileiro usando nomenclatura IUPAC oficial
-Linguagem adequada para 14-17 anos, tom conversacional
-Contextos brasileiros (agricultura, indústria, cotidiano)
-Apenas português - sem anglicismos ou termos estrangeiros
-Alternativas únicas e plausíveis com uma resposta correta
+REQUISITOS OBRIGATÓRIOS:
+- Traduza o nome para português brasileiro usando nomenclatura IUPAC oficial
+- Use linguagem adequada para 14-17 anos, tom conversacional
+- Contextualize apenas com situações brasileiras (agricultura, indústria, cotidiano)
+- Escreva apenas em português - sem anglicismos ou termos estrangeiros
+- Crie 4 alternativas por questão, apenas uma correta e plausível
 
-Tema das 5 Questões( APENAS DO TEMA, AS QUESTÕES PRECISAM SER CONTEXTUALIZADAS ):
-Nomenclatura: Nome IUPAC brasileiro, classificação, fórmula
-Estrutura: Grupos funcionais, ligações químicas, polaridade
-Propriedades: Solubilidade, pontos de fusão/ebulição, forças intermoleculares
-Aplicações: Usos industriais, medicinais, cotidianos no Brasil
-Reações: Transformações químicas típicas, produtos de reação
-Formato de Resposta
+TEMAS DAS 5 QUESTÕES (todas contextualizadas):
+1. Nomenclatura: Nome IUPAC brasileiro, classificação, fórmula
+2. Estrutura: Grupos funcionais, ligações químicas, polaridade
+3. Propriedades: Solubilidade, pontos de fusão/ebulição, forças intermoleculares
+4. Aplicações: Usos industriais, medicinais, cotidianos no Brasil
+5. Reações: Transformações químicas típicas, produtos de reação
+
+CONTEXTOS PRIORITÁRIOS:
+Fertilizantes, medicamentos, alimentos, combustíveis, produtos de limpeza, cosméticos, indústria petroquímica brasileira, tratamento de água, agricultura nacional.
+
+FORMATO DE RESPOSTA:
 Nome em português: [tradução IUPAC]
 
-Pergunta 1: [enunciado contextualizado]
+Questão 1: [enunciado contextualizado brasileiro]
 A) [alternativa]
-B) [alternativa] 
+B) [alternativa]
 C) [alternativa]
 D) [alternativa]
 Resposta correta: [letra]
 
 [Repetir para as 5 questões]
-Contextos Prioritários
-Fertilizantes, medicamentos, alimentos, combustíveis, produtos de limpeza, cosméticos, indústria petroquímica brasileira, tratamento de água, agricultura nacional.
+
 Crie questões instigantes que conectem a química teórica com aplicações práticas do dia a dia brasileiro.
 `;
 
