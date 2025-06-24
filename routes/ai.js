@@ -170,6 +170,9 @@ Não utilize nenhuma palavra em inglês nas perguntas ou alternativas
 Considere TODOS os tipos de compostos: orgânicos, inorgânicos, sais, ácidos, bases, óxidos, etc.
 Adeque a linguagem para estudantes do ensino médio (14-17 anos)
 Contextualize as perguntas com situações do cotidiano brasileiro
+Escreva em um tom conversacional e informativo, como se estivesse explicando para um estudante curioso do ensino médio. Evite introduções perguntas diretas. Mantenha o texto fluido e natural.
+
+IMPORTANTE: Responda SEMPRE em português brasileiro. Não use inglês ou qualquer outra língua
 
 Estrutura de cada pergunta:
 
