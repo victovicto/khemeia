@@ -161,22 +161,10 @@ IMPORTANTE: Esta resposta DEVE ser em português do Brasil. NÃO responda em ing
 
 // Função para gerar quiz da molécula
 async function gerarQuiz(nomeComposto) {
-  const prompt = `Analise o composto "${nomeComposto}" e crie 5 questões contextualizadas estilo ENEM de múltipla escolha para estudantes brasileiros do ensino médio abordando conceitos básicos da Química Orgânica: Nomenclatura: Nome IUPAC brasileiro, classificação, fórmula; Estrutura: Grupos funcionais, ligações químicas, polaridad; Propriedades: Solubilidade, pontos de fusão/ebulição, forças intermoleculares; Aplicações: Usos industriais, medicinais, cotidianos no Brasil; Reações: Transformações químicas típicas, produtos de reação
-
-REQUISITOS OBRIGATÓRIOS:
-- Traduza o nome para português brasileiro usando nomenclatura IUPAC oficial
-- Use linguagem adequada para 14-17 anos, tom conversacional
-- Contextualize apenas com situações brasileiras (agricultura, indústria, cotidiano)
-- Escreva apenas em português - sem anglicismos ou termos estrangeiros
-- Crie 4 alternativas por questão, apenas uma correta e plausível
-
-CONTEXTOS PRIORITÁRIOS:
-Fertilizantes, medicamentos, alimentos, combustíveis, produtos de limpeza, cosméticos, indústria petroquímica brasileira, tratamento de água, agricultura nacional.
-
-FORMATO DE RESPOSTA:
-Nome em português: [tradução IUPAC OFICIAL]
-
-Questão 1: [enunciado contextualizado brasileiro]
+  const prompt = `Gere 5 questões de múltipla escolha no estilo ENEM, em português, contextualizadas para alunos do ensino médio, sobre o composto "${nomeComposto}".
+As perguntas devem abordar conceitos básicos de química orgânica (como funções orgânicas, polaridade, ligações, propriedades físico-químicas, isomeria etc.).
+Use exclusivamente a nomenclatura oficial da IUPAC em português e evite qualquer erro conceitual.
+Cada questão deve ter 1 alternativa correta e 4 incorretas, todas coerentes e bem elaboradas, segue o modelo:
 A) [alternativa]
 B) [alternativa]
 C) [alternativa]
@@ -184,8 +172,6 @@ D) [alternativa]
 Resposta correta: [letra]
 
 [Repetir para as 5 questões]
-
-Crie questões CONTEXTUALIZADAS que conectem a química teórica com aplicações práticas do dia a dia BRASILEIRO.
 `;
 
   try {
