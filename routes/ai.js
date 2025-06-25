@@ -161,7 +161,7 @@ IMPORTANTE: Esta resposta DEVE ser em português do Brasil. NÃO responda em ing
 
 // Função para gerar quiz da molécula
 async function gerarQuiz(nomeComposto) {
-  const prompt = `Analise o composto "${nomeComposto}" e crie 5 questões de múltipla escolha para estudantes brasileiros do ensino médio, seguindo estas diretrizes:
+  const prompt = `Analise o composto "${nomeComposto}" e crie 5 questões contextualizadas estilo ENEM de múltipla escolha para estudantes brasileiros do ensino médio abordando conceitos básicos da Química Orgânica: Nomenclatura: Nome IUPAC brasileiro, classificação, fórmula; Estrutura: Grupos funcionais, ligações químicas, polaridad; Propriedades: Solubilidade, pontos de fusão/ebulição, forças intermoleculares; Aplicações: Usos industriais, medicinais, cotidianos no Brasil; Reações: Transformações químicas típicas, produtos de reação
 
 REQUISITOS OBRIGATÓRIOS:
 - Traduza o nome para português brasileiro usando nomenclatura IUPAC oficial
@@ -170,18 +170,11 @@ REQUISITOS OBRIGATÓRIOS:
 - Escreva apenas em português - sem anglicismos ou termos estrangeiros
 - Crie 4 alternativas por questão, apenas uma correta e plausível
 
-TEMAS DAS 5 QUESTÕES (todas contextualizadas):
-1. Nomenclatura: Nome IUPAC brasileiro, classificação, fórmula
-2. Estrutura: Grupos funcionais, ligações químicas, polaridade
-3. Propriedades: Solubilidade, pontos de fusão/ebulição, forças intermoleculares
-4. Aplicações: Usos industriais, medicinais, cotidianos no Brasil
-5. Reações: Transformações químicas típicas, produtos de reação
-
 CONTEXTOS PRIORITÁRIOS:
 Fertilizantes, medicamentos, alimentos, combustíveis, produtos de limpeza, cosméticos, indústria petroquímica brasileira, tratamento de água, agricultura nacional.
 
 FORMATO DE RESPOSTA:
-Nome em português: [tradução IUPAC]
+Nome em português: [tradução IUPAC OFICIAL]
 
 Questão 1: [enunciado contextualizado brasileiro]
 A) [alternativa]
@@ -192,7 +185,7 @@ Resposta correta: [letra]
 
 [Repetir para as 5 questões]
 
-Crie questões instigantes que conectem a química teórica com aplicações práticas do dia a dia brasileiro.
+Crie questões CONTEXTUALIZADAS que conectem a química teórica com aplicações práticas do dia a dia BRASILEIRO.
 `;
 
   try {
