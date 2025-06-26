@@ -285,11 +285,15 @@ function processarPerguntas(texto) {
 
         // Extrair alternativas com regex mais robusta
         const alternativas = {};
-        const alternativaMatches = [...bloco.matchAll(/([A-D])\)\s*([^\n\r]+(?:\s*[^\nA-D][^\n\r]*)*)/g)];
+        const alternativaMatches = [...bloco.matchAll(/([A-D])\)\s*([^\n\r]+(?:\s*[^\nA-DR][^\n\r]*)*?)(?=\s*(?:[A-D]\)|RESPOSTA|$))/gi)];
         
         alternativaMatches.forEach(match => {
           const letra = match[1];
-          const texto = match[2].trim();
+          let texto = match[2].trim();
+          
+          // Remover qualquer texto de resposta que possa ter sido capturado
+          texto = texto.replace(/\s*RESPOSTA\s*:\s*[A-D].*/gi, '').trim();
+          
           if (texto.length > 0) {
             alternativas[letra] = texto;
           }
