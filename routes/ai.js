@@ -159,27 +159,50 @@ IMPORTANTE: Esta resposta DEVE ser em português do Brasil. NÃO responda em ing
   }
 }
 
-// Função para gerar quiz da molécula
 async function gerarQuiz(nomeComposto) {
-  const prompt = `Gere 5 questões de múltipla escolha no estilo ENEM, em português, contextualizadas para alunos do ensino médio, sobre o composto "${nomeComposto}".
-As perguntas devem abordar conceitos básicos de química orgânica (como funções orgânicas, polaridade, ligações, propriedades físico-químicas, isomeria etc.).
-Use exclusivamente a nomenclatura oficial da IUPAC em português e evite qualquer erro conceitual.
-Cada questão deve ter 1 alternativa correta e 4 incorretas, todas coerentes e bem elaboradas, segue o modelo:
-A) [alternativa]
-B) [alternativa]
-C) [alternativa]
-D) [alternativa]
-Resposta correta: [letra]
+  const prompt = `Gere exatamente 5 questões de múltipla escolha no estilo ENEM, em português brasileiro, sobre o composto "${nomeComposto}".
 
-[Repetir para as 5 questões]
-`;
+FORMATO OBRIGATÓRIO para cada questão:
+
+QUESTÃO 1:
+[Enunciado da questão aqui]
+
+A) [alternativa A]
+B) [alternativa B] 
+C) [alternativa C]
+D) [alternativa D]
+
+RESPOSTA: [A, B, C ou D]
+
+---
+
+QUESTÃO 2:
+[Enunciado da questão aqui]
+
+A) [alternativa A]
+B) [alternativa B]
+C) [alternativa C] 
+D) [alternativa D]
+
+RESPOSTA: [A, B, C ou D]
+
+---
+
+[Continue este padrão para as 5 questões]
+
+IMPORTANTE:
+- Use APENAS português brasileiro
+- Aborde química orgânica (funções, polaridade, ligações, propriedades, isomeria)
+- Use nomenclatura IUPAC em português
+- Separe cada questão com "---"
+- Seja preciso cientificamente`;
 
   try {
     const response = await togetherAPI.post('', {
       model: "mistralai/Mistral-7B-Instruct-v0.1",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 2000 // Aumentado para comportar 5 questões
     });
 
     let perguntasTexto = response.data.choices?.[0]?.message?.content || "";
@@ -190,26 +213,31 @@ Resposta correta: [letra]
       
       const retryPrompt = `${prompt}
 
-REPITO: TODAS as perguntas e respostas devem ser em PORTUGUÊS BRASILEIRO. NÃO use inglês!`;
+ATENÇÃO CRÍTICA: TODAS as questões devem ser em PORTUGUÊS BRASILEIRO! Não use uma palavra sequer em inglês!`;
       
       const retryResponse = await togetherAPI.post('', {
-        model: "mistralai/Mistral-7B-Instruct-v0.1",
+        model: "mistralai/Mistral-7B-Instruct-v0.1", 
         messages: [{ role: "user", content: retryPrompt }],
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 2000
       });
       
       perguntasTexto = retryResponse.data.choices?.[0]?.message?.content || perguntasTexto;
     }
     
-    return processarPerguntas(perguntasTexto);
+    console.log('Texto completo recebido da IA:', perguntasTexto); // Debug
+    
+    const questoesProcessadas = processarPerguntas(perguntasTexto);
+    console.log(`Questões processadas: ${questoesProcessadas.length}`); // Debug
+    
+    return questoesProcessadas;
   } catch (error) {
     console.error('Erro na API Together AI (quiz):', error);
     throw new Error('Falha ao gerar quiz: ' + error.message);
   }
 }
 
-// Função para processar o texto das perguntas em formato estruturado
+// Função COMPLETAMENTE reescrita para processar as perguntas
 function processarPerguntas(texto) {
   if (!texto || typeof texto !== 'string') {
     console.warn('Texto vazio ou inválido para processamento de perguntas');
@@ -217,73 +245,111 @@ function processarPerguntas(texto) {
   }
 
   try {
-    // Dividir o texto em blocos de perguntas
-    const blocos = texto.split(/Pergunta\s*\d+:/i).filter(b => b.trim());
-    
-    return blocos.map(bloco => {
+    console.log('Processando texto:', texto.substring(0, 200) + '...'); // Debug
+
+    // Dividir por "QUESTÃO" ou "---" ou números seguidos de ":"
+    let blocos = texto.split(/(?:QUESTÃO\s*\d+\s*:|---|\d+\s*\.|\d+\s*\))/i)
+                     .filter(bloco => bloco.trim().length > 20); // Filtrar blocos muito pequenos
+
+    // Se não encontrou divisões claras, tentar por padrões de resposta
+    if (blocos.length < 2) {
+      blocos = texto.split(/RESPOSTA\s*:\s*[A-D]/i)
+                   .filter(bloco => bloco.trim().length > 20);
+      
+      // Reagrupar com as respostas
+      if (blocos.length > 1) {
+        const respostasMatch = [...texto.matchAll(/RESPOSTA\s*:\s*([A-D])/gi)];
+        blocos = blocos.slice(0, -1).map((bloco, index) => {
+          const resposta = respostasMatch[index] ? respostasMatch[index][0] : '';
+          return bloco + '\n' + resposta;
+        });
+      }
+    }
+
+    console.log(`Encontrados ${blocos.length} blocos`); // Debug
+
+    const questoesProcessadas = blocos.map((bloco, index) => {
       try {
-        // Extrair o enunciado (primeira linha)
-        const enunciadoMatch = bloco.match(/^(.*?)(?:\n|$)/);
-        if (!enunciadoMatch) return null;
-        
-        // Extrair alternativas
+        console.log(`Processando bloco ${index + 1}:`, bloco.substring(0, 100) + '...'); // Debug
+
+        // Extrair enunciado (primeira parte até as alternativas)
+        const enunciadoMatch = bloco.match(/^(.*?)(?=\s*A\))/s);
+        if (!enunciadoMatch) {
+          console.warn(`Bloco ${index + 1}: Enunciado não encontrado`);
+          return null;
+        }
+
+        const enunciado = enunciadoMatch[1].trim()
+                                         .replace(/^(QUESTÃO\s*\d+\s*:?)/i, '')
+                                         .trim();
+
+        // Extrair alternativas com regex mais robusta
         const alternativas = {};
-        const alternativaRegex = /([A-D])\)\s*(.*?)(?=\s*(?:[A-D]\)|Resposta|$))/gs;
+        const alternativaMatches = [...bloco.matchAll(/([A-D])\)\s*([^\n\r]+(?:\s*[^\nA-D][^\n\r]*)*)/g)];
         
-        let match;
-        while ((match = alternativaRegex.exec(bloco)) !== null) {
-          alternativas[match[1]] = match[2].trim();
-        }
-        
-        // Se não encontrou alternativas, tentar abordagem linha por linha
-        if (Object.keys(alternativas).length < 4) {
-          const linhas = bloco.split('\n');
-          for (const linha of linhas) {
-            const altMatch = linha.match(/^([A-D])\)\s*(.*)/);
-            if (altMatch) {
-              alternativas[altMatch[1]] = altMatch[2].trim();
-            }
+        alternativaMatches.forEach(match => {
+          const letra = match[1];
+          const texto = match[2].trim();
+          if (texto.length > 0) {
+            alternativas[letra] = texto;
           }
-        }
+        });
+
+        console.log(`Bloco ${index + 1}: Alternativas encontradas:`, Object.keys(alternativas)); // Debug
 
         // Extrair resposta correta
-        const respostaMatch = bloco.match(/Resposta\s+correta\s*:\s*([A-D])/i);
+        const respostaMatch = bloco.match(/RESPOSTA\s*:\s*([A-D])/i);
         const respostaCorreta = respostaMatch ? respostaMatch[1].toUpperCase() : null;
 
-        // Validar se temos todos os componentes necessários
-        if (!enunciadoMatch || Object.keys(alternativas).length < 4 || !respostaCorreta) {
-          console.warn("Pergunta mal formatada:", {
-            temEnunciado: !!enunciadoMatch,
-            numAlternativas: Object.keys(alternativas).length,
-            temResposta: !!respostaCorreta
-          });
+        console.log(`Bloco ${index + 1}: Resposta correta:`, respostaCorreta); // Debug
+
+        // Validações
+        if (!enunciado || enunciado.length < 10) {
+          console.warn(`Bloco ${index + 1}: Enunciado inválido`);
+          return null;
+        }
+
+        if (Object.keys(alternativas).length < 4) {
+          console.warn(`Bloco ${index + 1}: Alternativas insuficientes (${Object.keys(alternativas).length})`);
+          return null;
+        }
+
+        if (!respostaCorreta || !alternativas[respostaCorreta]) {
+          console.warn(`Bloco ${index + 1}: Resposta correta inválida`);
           return null;
         }
 
         return {
-          enunciado: enunciadoMatch[1].trim(),
+          enunciado: enunciado,
           alternativas: alternativas,
           correta: respostaCorreta
         };
+
       } catch (err) {
-        console.error('Erro ao processar bloco de pergunta:', err);
+        console.error(`Erro ao processar bloco ${index + 1}:`, err);
         return null;
       }
-    }).filter(Boolean); // Filtrar valores null
+    }).filter(Boolean); // Remover valores null
+
+    console.log(`Total de questões válidas processadas: ${questoesProcessadas.length}`); // Debug
+    
+    return questoesProcessadas;
+
   } catch (err) {
     console.error('Erro geral no processamento de perguntas:', err);
     return [];
   }
 }
 
-// Funções auxiliares para detecção de idioma inglês
+// Função auxiliar para detectar frases em inglês (mantida igual)
 function containsEnglishPhrases(text) {
   if (!text || typeof text !== 'string') return false;
   
   const englishPhrases = [
     'this compound', 'the compound', 'is used', 'is a', 'it is', 
     'it can', 'is known', 'has been', 'was discovered', 'this molecule',
-    'which is', 'that is', 'commonly used', 'important for'
+    'which is', 'that is', 'commonly used', 'important for', 'question',
+    'answer', 'correct', 'option', 'choice'
   ];
   
   return englishPhrases.some(phrase => 
@@ -291,7 +357,7 @@ function containsEnglishPhrases(text) {
   );
 }
 
-// Endpoint de health-check
+// Endpoint de health-check (mantido igual)
 router.get('/ping', (req, res) => {
   res.json({ 
     status: 'OK', 
