@@ -5,7 +5,7 @@ API REST de um aplicativo mobile que ajuda estudantes do ensino médio a aprende
 Projeto de conclusão do **Ensino Médio Técnico em Informática** na **Fundação Matias Machline (FMM)**, em Manaus – AM, desenvolvido em equipe.
 
 📱 Screenshots
-<p align="center"> <img src="khemeia-screenshots/docs/screenshots/01-onboarding.jpg" width="220" alt="Onboarding" /> <img src="docs/screenshots/02-tela-inicial.jpg" width="220" alt="Tela inicial" /> <img src="docs/screenshots/03-busca-composto.jpg" width="220" alt="Busca de composto" /> </p> <p align="center"> <img src="docs/screenshots/04-editor-molecular.jpg" width="220" alt="Editor molecular" /> <img src="docs/screenshots/05-explorador-assuntos.jpg" width="220" alt="Explorador de assuntos" /> <img src="docs/screenshots/06-quiz.jpg" width="220" alt="Quiz" /> </p>
+<p align="center"> <img src="khemeia-screenshots/docs/screenshots/01-onboarding.jpg" width="220" alt="Onboarding" /> <img src="khemeia-screenshots/docs/screenshots/02-tela-inicial.jpg" width="220" alt="Tela inicial" /> <img src="khemeia-screenshots/docs/screenshots/03-busca-composto.jpg" width="220" alt="Busca de composto" /> </p> <p align="center"> <img src="khemeia-screenshots/docs/screenshots/04-editor-molecular.jpg" width="220" alt="Editor molecular" /> <img src="khemeia-screenshots/docs/screenshots/05-explorador-assuntos.jpg" width="220" alt="Explorador de assuntos" /> <img src="khemeia-screenshots/docs/screenshots/06-quiz.jpg" width="220" alt="Quiz" /> </p>
 Tela	Descrição
 Onboarding	Apresentação do app, com foco em vestibulares
 Tela inicial	Busca de compostos, ofensiva de estudos e atalhos
