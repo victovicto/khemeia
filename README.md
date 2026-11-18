@@ -1,4 +1,4 @@
-[README-screenshots-section.md](https://github.com/user-attachments/files/35045405/README-screenshots-section.md)# Khemeia — Backend ⚗️
+# Khemeia — Backend ⚗️
 
 API REST de um aplicativo mobile que ajuda estudantes do ensino médio a aprender **Química Orgânica**: o aluno desenha moléculas, estuda por assunto, responde quizzes, acompanha seu desempenho e recebe curiosidades e questões geradas por IA.
 
