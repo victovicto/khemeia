@@ -1,4 +1,4 @@
-# Khemeia — Backend ⚗️
+[README-screenshots-section.md](https://github.com/user-attachments/files/35045405/README-screenshots-section.md)# Khemeia — Backend ⚗️
 
 API REST de um aplicativo mobile que ajuda estudantes do ensino médio a aprender **Química Orgânica**: o aluno desenha moléculas, estuda por assunto, responde quizzes, acompanha seu desempenho e recebe curiosidades e questões geradas por IA.
 
@@ -6,13 +6,17 @@ Projeto de conclusão do **Ensino Médio Técnico em Informática** na **Fundaç
 
 📱 Screenshots
 <p align="center"> <img src="khemeia-screenshots/docs/screenshots/01-onboarding.jpg" width="220" alt="Onboarding" /> <img src="khemeia-screenshots/docs/screenshots/02-tela-inicial.jpg" width="220" alt="Tela inicial" /> <img src="khemeia-screenshots/docs/screenshots/03-busca-composto.jpg" width="220" alt="Busca de composto" /> </p> <p align="center"> <img src="khemeia-screenshots/docs/screenshots/04-editor-molecular.jpg" width="220" alt="Editor molecular" /> <img src="khemeia-screenshots/docs/screenshots/05-explorador-assuntos.jpg" width="220" alt="Explorador de assuntos" /> <img src="khemeia-screenshots/docs/screenshots/06-quiz.jpg" width="220" alt="Quiz" /> </p>
-Tela	Descrição
-Onboarding	Apresentação do app, com foco em vestibulares
-Tela inicial	Busca de compostos, ofensiva de estudos e atalhos
-Busca de composto	Fórmula molecular, massa, SMILES e estrutura (ex.: etanol)
-Editor molecular	Desenhe moléculas e capture o nome do composto
-Explorador de assuntos	Módulos de Química Orgânica e progresso de estudo
-Quiz	Questões contextualizadas no estilo dos vestibulares
+
+
+| Tela | Descrição |
+|------|-----------|
+| **Onboarding** | Apresentação do app, com foco em vestibulares |
+| **Tela inicial** | Busca de compostos, ofensiva de estudos e atalhos |
+| **Busca de composto** | Fórmula molecular, massa, SMILES e estrutura (ex.: etanol) |
+| **Editor molecular** | Desenhe moléculas e capture o nome do composto |
+| **Explorador de assuntos** | Módulos de Química Orgânica e progresso de estudo |
+| **Quiz** | Questões contextualizadas no estilo dos vestibulares |
+
 
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
